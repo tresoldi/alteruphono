@@ -1,8 +1,7 @@
 import itertools
 from typing import List, Union, Tuple
 
-from maniphono import SegSequence, Sound, SoundSegment, BoundarySegment
-from maniphono.segment import Segment
+from .phonology import SegSequence, Sound, SoundSegment, BoundarySegment, Segment
 
 from .common import check_match
 from .model import (

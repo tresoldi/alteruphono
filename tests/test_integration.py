@@ -11,7 +11,7 @@ import unittest
 import csv
 import os
 import alteruphono
-import maniphono
+from alteruphono.phonology import parse_sequence
 
 
 class TestRealLinguisticData(unittest.TestCase):
@@ -33,7 +33,7 @@ class TestRealLinguisticData(unittest.TestCase):
             with self.subTest(rule=rule_str):
                 try:
                     rule = alteruphono.Rule(rule_str)
-                    input_seq = maniphono.parse_sequence(input_str, boundaries=True)
+                    input_seq = parse_sequence(input_str, boundaries=True)
                     result = alteruphono.forward(input_seq, rule)
                     result_str = " ".join(str(s) for s in result)
                     self.assertEqual(result_str, expected_str)
@@ -56,7 +56,7 @@ class TestRealLinguisticData(unittest.TestCase):
             with self.subTest(rule=rule_str):
                 try:
                     rule = alteruphono.Rule(rule_str)
-                    input_seq = maniphono.parse_sequence(input_str, boundaries=True)
+                    input_seq = parse_sequence(input_str, boundaries=True)
                     result = alteruphono.forward(input_seq, rule)
                     result_str = " ".join(str(s) for s in result)
                     self.assertEqual(result_str, expected_str)
@@ -77,7 +77,7 @@ class TestRealLinguisticData(unittest.TestCase):
             with self.subTest(rule=rule_str):
                 try:
                     rule = alteruphono.Rule(rule_str)
-                    input_seq = maniphono.parse_sequence(input_str, boundaries=True)
+                    input_seq = parse_sequence(input_str, boundaries=True)
                     result = alteruphono.forward(input_seq, rule)
                     result_str = " ".join(str(s) for s in result)
                     self.assertEqual(result_str, expected_str)
@@ -101,7 +101,7 @@ class TestBidirectionalConsistency(unittest.TestCase):
             with self.subTest(rule=rule_str, input=input_str):
                 try:
                     rule = alteruphono.Rule(rule_str)
-                    input_seq = maniphono.parse_sequence(input_str, boundaries=True)
+                    input_seq = parse_sequence(input_str, boundaries=True)
                     
                     # Apply forward
                     forward_result = alteruphono.forward(input_seq, rule)
@@ -126,7 +126,7 @@ class TestBidirectionalConsistency(unittest.TestCase):
         for rule_str, output_str in test_cases:
             with self.subTest(rule=rule_str, output=output_str):
                 rule = alteruphono.Rule(rule_str)
-                output_seq = maniphono.parse_sequence(output_str, boundaries=True)
+                output_seq = parse_sequence(output_str, boundaries=True)
                 
                 # Apply backward
                 backward_results = alteruphono.backward(output_seq, rule)
@@ -152,7 +152,7 @@ class TestComplexRuleInteractions(unittest.TestCase):
         rule1 = alteruphono.Rule("a > e")
         rule2 = alteruphono.Rule("e > i / _ C")
         
-        input_seq = maniphono.parse_sequence("# a p a k #", boundaries=True)
+        input_seq = parse_sequence("# a p a k #", boundaries=True)
         
         # Apply first rule
         intermediate = alteruphono.forward(input_seq, rule1)
@@ -174,7 +174,7 @@ class TestComplexRuleInteractions(unittest.TestCase):
         rule1 = alteruphono.Rule("p > f / _ s")
         rule2 = alteruphono.Rule("s > h / p _")
         
-        input_seq = maniphono.parse_sequence("# p s a #", boundaries=True)
+        input_seq = parse_sequence("# p s a #", boundaries=True)
         
         # Apply first rule (should change p > f)
         intermediate = alteruphono.forward(input_seq, rule1)
@@ -192,7 +192,7 @@ class TestComplexRuleInteractions(unittest.TestCase):
         rule1 = alteruphono.Rule("p > f / _ s")
         rule2 = alteruphono.Rule("s > h / p _")
         
-        input_seq = maniphono.parse_sequence("# p s a #", boundaries=True)
+        input_seq = parse_sequence("# p s a #", boundaries=True)
         
         # Apply second rule first (should change s > h)
         intermediate = alteruphono.forward(input_seq, rule2)
@@ -218,7 +218,7 @@ class TestPerformanceWithLargeData(unittest.TestCase):
             alteruphono.Rule("u > a"),  # Cycle back
         ]
         
-        input_seq = maniphono.parse_sequence("# a a a a a #", boundaries=True)
+        input_seq = parse_sequence("# a a a a a #", boundaries=True)
         
         # Apply all rules in sequence
         current_seq = input_seq
@@ -234,7 +234,7 @@ class TestPerformanceWithLargeData(unittest.TestCase):
         # Create a long sequence
         segments = ["#"] + ["p", "a"] * 25 + ["#"]  # 52 segments total
         input_str = " ".join(segments)
-        input_seq = maniphono.parse_sequence(input_str, boundaries=True)
+        input_seq = parse_sequence(input_str, boundaries=True)
         
         rule = alteruphono.Rule("p > b")
         result = alteruphono.forward(input_seq, rule)
@@ -251,7 +251,7 @@ class TestPerformanceWithLargeData(unittest.TestCase):
         """Test backward reconstruction with many possibilities."""
         # Rule that creates many possible reconstructions
         rule = alteruphono.Rule("p|t|k > b")
-        input_seq = maniphono.parse_sequence("# b b b #", boundaries=True)
+        input_seq = parse_sequence("# b b b #", boundaries=True)
         
         results = alteruphono.backward(input_seq, rule)
         
@@ -301,7 +301,7 @@ class TestErrorHandling(unittest.TestCase):
         for input_str in invalid_inputs:
             with self.subTest(input=input_str):
                 try:
-                    input_seq = maniphono.parse_sequence(input_str, boundaries=True)
+                    input_seq = parse_sequence(input_str, boundaries=True)
                     result = alteruphono.forward(input_seq, rule)
                     # Should handle gracefully
                     self.assertIsInstance(result, list)

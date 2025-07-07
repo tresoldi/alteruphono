@@ -9,7 +9,7 @@ Comprehensive tests for forward sound change application.
 
 import unittest
 import alteruphono
-import maniphono
+from alteruphono.phonology import parse_sequence
 
 
 class TestForwardBasic(unittest.TestCase):
@@ -18,7 +18,7 @@ class TestForwardBasic(unittest.TestCase):
     def test_simple_substitution(self):
         """Test simple sound substitution."""
         rule = alteruphono.Rule("p > b")
-        ante = maniphono.parse_sequence("# p a p a #", boundaries=True)
+        ante = parse_sequence("# p a p a #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# b a b a #"
@@ -27,7 +27,7 @@ class TestForwardBasic(unittest.TestCase):
     def test_no_change_when_no_match(self):
         """Test that sequences remain unchanged when rule doesn't match."""
         rule = alteruphono.Rule("p > b")
-        ante = maniphono.parse_sequence("# t a k a #", boundaries=True)
+        ante = parse_sequence("# t a k a #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# t a k a #"
@@ -36,7 +36,7 @@ class TestForwardBasic(unittest.TestCase):
     def test_partial_application(self):
         """Test that rules apply only where they match."""
         rule = alteruphono.Rule("p > b")
-        ante = maniphono.parse_sequence("# p a t a p #", boundaries=True)
+        ante = parse_sequence("# p a t a p #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# b a t a b #"
@@ -49,7 +49,7 @@ class TestForwardContext(unittest.TestCase):
     def test_following_context(self):
         """Test rules with following context."""
         rule = alteruphono.Rule("p > b / _ a")
-        ante = maniphono.parse_sequence("# p a p i #", boundaries=True)
+        ante = parse_sequence("# p a p i #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# b a p i #"
@@ -58,7 +58,7 @@ class TestForwardContext(unittest.TestCase):
     def test_preceding_context(self):
         """Test rules with preceding context."""
         rule = alteruphono.Rule("p > b / a _")
-        ante = maniphono.parse_sequence("# a p i p #", boundaries=True)
+        ante = parse_sequence("# a p i p #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# a b i p #"
@@ -67,7 +67,7 @@ class TestForwardContext(unittest.TestCase):
     def test_both_contexts(self):
         """Test rules with both preceding and following context."""
         rule = alteruphono.Rule("p > b / a _ i")
-        ante = maniphono.parse_sequence("# a p i a p a #", boundaries=True)
+        ante = parse_sequence("# a p i a p a #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# a b i a p a #"
@@ -76,7 +76,7 @@ class TestForwardContext(unittest.TestCase):
     def test_boundary_context(self):
         """Test rules with word boundary context."""
         rule = alteruphono.Rule("p > b / # _")
-        ante = maniphono.parse_sequence("# p a a p a #", boundaries=True)
+        ante = parse_sequence("# p a a p a #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# b a a p a #"
@@ -85,7 +85,7 @@ class TestForwardContext(unittest.TestCase):
     def test_final_boundary_context(self):
         """Test rules with word-final boundary context."""
         rule = alteruphono.Rule("p > b / _ #")
-        ante = maniphono.parse_sequence("# a p p a p #", boundaries=True)
+        ante = parse_sequence("# a p p a p #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# a p p a b #"
@@ -98,7 +98,7 @@ class TestForwardFeatures(unittest.TestCase):
     def test_feature_matching(self):
         """Test rules using phonological features."""
         rule = alteruphono.Rule("t[voiced] > s")
-        ante = maniphono.parse_sequence("# t a d a #", boundaries=True)
+        ante = parse_sequence("# t a d a #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# t a s a #"
@@ -107,7 +107,7 @@ class TestForwardFeatures(unittest.TestCase):
     def test_feature_with_context(self):
         """Test feature-based rules with context."""
         rule = alteruphono.Rule("S > p / _ V")
-        ante = maniphono.parse_sequence("# t i s e #", boundaries=True)
+        ante = parse_sequence("# t i s e #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         # Note: The exact output depends on how S class is defined
@@ -121,7 +121,7 @@ class TestForwardChoicesAndSets(unittest.TestCase):
     def test_choice_matching(self):
         """Test rules with choice alternatives."""
         rule = alteruphono.Rule("p|t > b")
-        ante = maniphono.parse_sequence("# p a t a k #", boundaries=True)
+        ante = parse_sequence("# p a t a k #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# b a b a k #"
@@ -130,7 +130,7 @@ class TestForwardChoicesAndSets(unittest.TestCase):
     def test_set_correspondence(self):
         """Test rules with set correspondences."""
         rule = alteruphono.Rule("{p|t} > {b|d}")
-        ante = maniphono.parse_sequence("# p a t a #", boundaries=True)
+        ante = parse_sequence("# p a t a #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# b a d a #"
@@ -139,7 +139,7 @@ class TestForwardChoicesAndSets(unittest.TestCase):
     def test_complex_choice_with_context(self):
         """Test complex rules with choices and context."""
         rule = alteruphono.Rule("p|t a @1|k > p a t")
-        ante = maniphono.parse_sequence("# t a k #", boundaries=True)
+        ante = parse_sequence("# t a k #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# p a t #"
@@ -152,7 +152,7 @@ class TestForwardBackReferences(unittest.TestCase):
     def test_simple_backref(self):
         """Test rules with simple back-references."""
         rule = alteruphono.Rule("a b > @1 @1")
-        ante = maniphono.parse_sequence("# a b a b #", boundaries=True)
+        ante = parse_sequence("# a b a b #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# a a a a #"
@@ -161,7 +161,7 @@ class TestForwardBackReferences(unittest.TestCase):
     def test_backref_with_modifier(self):
         """Test back-references with feature modifiers."""
         rule = alteruphono.Rule("p > @1[voiced]")
-        ante = maniphono.parse_sequence("# p a p a #", boundaries=True)
+        ante = parse_sequence("# p a p a #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         # Result should have voiced version of p
         self.assertIsInstance(result, list)
@@ -169,7 +169,7 @@ class TestForwardBackReferences(unittest.TestCase):
     def test_backref_in_context(self):
         """Test back-references in context rules."""
         rule = alteruphono.Rule("s > z / V _ V")
-        ante = maniphono.parse_sequence("# a s a i s i #", boundaries=True)
+        ante = parse_sequence("# a s a i s i #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         # Both intervocalic s should become z
         self.assertIsInstance(result, list)
@@ -181,7 +181,7 @@ class TestForwardDeletionInsertion(unittest.TestCase):
     def test_deletion(self):
         """Test sound deletion rules."""
         rule = alteruphono.Rule("h > :null:")
-        ante = maniphono.parse_sequence("# a h a h a #", boundaries=True)
+        ante = parse_sequence("# a h a h a #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# a a a #"
@@ -190,7 +190,7 @@ class TestForwardDeletionInsertion(unittest.TestCase):
     def test_conditional_deletion(self):
         """Test conditional deletion rules."""
         rule = alteruphono.Rule("h > :null: / V _ V")
-        ante = maniphono.parse_sequence("# h a h a h #", boundaries=True)
+        ante = parse_sequence("# h a h a h #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# h a a h #"
@@ -199,7 +199,7 @@ class TestForwardDeletionInsertion(unittest.TestCase):
     def test_insertion(self):
         """Test sound insertion rules."""
         rule = alteruphono.Rule(":null: > h / V _ V")
-        ante = maniphono.parse_sequence("# a a i i #", boundaries=True)
+        ante = parse_sequence("# a a i i #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         # Current implementation doesn't fully support insertion between existing segments
@@ -213,7 +213,7 @@ class TestForwardEdgeCases(unittest.TestCase):
     def test_empty_sequence(self):
         """Test applying rules to empty sequences."""
         rule = alteruphono.Rule("p > b")
-        ante = maniphono.parse_sequence("# #", boundaries=True)
+        ante = parse_sequence("# #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# #"
@@ -222,7 +222,7 @@ class TestForwardEdgeCases(unittest.TestCase):
     def test_single_segment_sequence(self):
         """Test applying rules to single-segment sequences."""
         rule = alteruphono.Rule("p > b")
-        ante = maniphono.parse_sequence("# p #", boundaries=True)
+        ante = parse_sequence("# p #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# b #"
@@ -231,7 +231,7 @@ class TestForwardEdgeCases(unittest.TestCase):
     def test_overlapping_matches_prevented(self):
         """Test that overlapping matches are prevented."""
         rule = alteruphono.Rule("a a > b")
-        ante = maniphono.parse_sequence("# a a a #", boundaries=True)
+        ante = parse_sequence("# a a a #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         # Should apply to first two 'a's, leaving third unchanged
@@ -241,7 +241,7 @@ class TestForwardEdgeCases(unittest.TestCase):
     def test_multiple_rule_applications(self):
         """Test multiple applications of the same rule."""
         rule = alteruphono.Rule("a > e")
-        ante = maniphono.parse_sequence("# a p a t a #", boundaries=True)
+        ante = parse_sequence("# a p a t a #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# e p e t e #"
@@ -250,7 +250,7 @@ class TestForwardEdgeCases(unittest.TestCase):
     def test_long_context_matches(self):
         """Test rules with long context requirements."""
         rule = alteruphono.Rule("p > b / a t _ i k")
-        ante = maniphono.parse_sequence("# a t p i k a p a #", boundaries=True)
+        ante = parse_sequence("# a t p i k a p a #", boundaries=True)
         result = alteruphono.forward(ante, rule)
         result_str = " ".join(str(s) for s in result)
         expected = "# a t b i k a p a #"
@@ -266,7 +266,7 @@ class TestForwardPerformance(unittest.TestCase):
         # Create a longer sequence
         segments = ["#"] + ["a", "p"] * 50 + ["#"]
         sequence_str = " ".join(segments)
-        ante = maniphono.parse_sequence(sequence_str, boundaries=True)
+        ante = parse_sequence(sequence_str, boundaries=True)
         
         result = alteruphono.forward(ante, rule)
         

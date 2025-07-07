@@ -13,7 +13,7 @@ import unittest
 
 # Import the library being test and auxiliary libraries
 import alteruphono
-import maniphono
+from alteruphono.phonology import parse_sequence
 
 
 class TestChangers(unittest.TestCase):
@@ -35,8 +35,8 @@ class TestChangers(unittest.TestCase):
 
         for test, ref in reference.items():
             rule = alteruphono.Rule(test[0])
-            ante = maniphono.parse_sequence(test[1], boundaries=True)
-            post = maniphono.parse_sequence(ref, boundaries=True)
+            ante = parse_sequence(test[1], boundaries=True)
+            post = parse_sequence(ref, boundaries=True)
             fw = alteruphono.forward(ante, rule)
             fw_str = " ".join([str(v) for v in fw])
             assert fw_str == str(post)
@@ -55,7 +55,7 @@ class TestChangers(unittest.TestCase):
         for test, ref in reference.items():
             rule = alteruphono.Rule(test[0])
             # ante = [alteruphono.parse_seq_as_rule(str(r)) for r in ref]
-            post = maniphono.parse_sequence(test[1], boundaries=True)
+            post = parse_sequence(test[1], boundaries=True)
 
             bw = alteruphono.backward(post, rule)
             bw_strs = tuple([str(b) for b in bw])

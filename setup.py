@@ -36,6 +36,6 @@ setup(
     test_suite="tests",
     tests_require=[],
     url="https://github.com/tresoldi/alteruphono",
-    version="0.5rc1", # remember to sync with __init__.py
+    version="0.6.0", # remember to sync with __init__.py
     zip_safe=False,
 )

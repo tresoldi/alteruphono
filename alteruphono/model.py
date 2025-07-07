@@ -4,7 +4,7 @@ Module holding the classes for the manipulation of sound changes.
 
 from typing import Union
 
-from maniphono import parse_segment, Sound, SoundSegment
+from .phonology import parse_segment, Sound, SoundSegment
 
 # TODO: all tokens should have a method to return a corresponding segment
 

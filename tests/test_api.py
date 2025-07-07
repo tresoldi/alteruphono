@@ -48,11 +48,11 @@ class TestPublicAPI(unittest.TestCase):
 
     def test_forward_function_signature(self):
         """Test the forward function signature and basic usage."""
-        import maniphono
+        from alteruphono.phonology import parse_sequence, parse_segment
         
         # Test with minimal valid input
         rule = alteruphono.Rule("p > b")
-        sequence = maniphono.parse_sequence("# p #", boundaries=True)
+        sequence = parse_sequence("# p #", boundaries=True)
         
         result = alteruphono.forward(sequence, rule)
         
@@ -64,11 +64,11 @@ class TestPublicAPI(unittest.TestCase):
 
     def test_backward_function_signature(self):
         """Test the backward function signature and basic usage."""
-        import maniphono
+        from alteruphono.phonology import parse_sequence, parse_segment
         
         # Test with minimal valid input
         rule = alteruphono.Rule("p > b")
-        sequence = maniphono.parse_sequence("# b #", boundaries=True)
+        sequence = parse_sequence("# b #", boundaries=True)
         
         result = alteruphono.backward(sequence, rule)
         
@@ -117,9 +117,9 @@ class TestPublicAPI(unittest.TestCase):
 
     def test_check_match_api(self):
         """Test check_match function API."""
-        import maniphono
+        from alteruphono.phonology import parse_sequence, parse_segment
         
-        sequence = [maniphono.parse_segment("p")]
+        sequence = [parse_segment("p")]
         pattern = [alteruphono.SegmentToken("p")]
         
         match, match_list = alteruphono.check_match(sequence, pattern)
@@ -151,10 +151,10 @@ class TestAPIConsistency(unittest.TestCase):
 
     def test_forward_backward_types(self):
         """Test that forward and backward return consistent types."""
-        import maniphono
+        from alteruphono.phonology import parse_sequence, parse_segment
         
         rule = alteruphono.Rule("p > b")
-        sequence = maniphono.parse_sequence("# p #", boundaries=True)
+        sequence = parse_sequence("# p #", boundaries=True)
         
         # Forward should return list of segments
         forward_result = alteruphono.forward(sequence, rule)
@@ -267,10 +267,10 @@ class TestAPIStability(unittest.TestCase):
 
     def test_immutable_api_behavior(self):
         """Test that API functions don't modify their inputs."""
-        import maniphono
+        from alteruphono.phonology import parse_sequence, parse_segment
         
         rule = alteruphono.Rule("p > b")
-        original_sequence = maniphono.parse_sequence("# p a p #", boundaries=True)
+        original_sequence = parse_sequence("# p a p #", boundaries=True)
         
         # Store original string representation
         original_str = str(original_sequence)
@@ -293,10 +293,10 @@ class TestAPIStability(unittest.TestCase):
 
     def test_deterministic_behavior(self):
         """Test that API functions behave deterministically."""
-        import maniphono
+        from alteruphono.phonology import parse_sequence, parse_segment
         
         rule = alteruphono.Rule("p > b")
-        sequence = maniphono.parse_sequence("# p a p #", boundaries=True)
+        sequence = parse_sequence("# p a p #", boundaries=True)
         
         # Multiple calls should give same results
         result1 = alteruphono.forward(sequence, rule)

@@ -9,8 +9,8 @@ Tests for common functionality in the `alteruphono` package.
 
 import unittest
 from unittest.mock import Mock
-import maniphono
 import alteruphono
+from alteruphono.phonology import BoundarySegment, parse_segment, Sound, SoundSegment
 from alteruphono.common import check_match
 from alteruphono.model import (
     BoundaryToken,
@@ -25,13 +25,10 @@ class TestCheckMatch(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.boundary_seg = maniphono.BoundarySegment()
-        try:
-            self.sound_seg_p = maniphono.parse_segment("p")
-            self.sound_seg_b = maniphono.parse_segment("b")
-            self.sound_seg_a = maniphono.parse_segment("a")
-        except ImportError:
-            self.skipTest("maniphono not available")
+        self.boundary_seg = BoundarySegment()
+        self.sound_seg_p = parse_segment("p")
+        self.sound_seg_b = parse_segment("b")
+        self.sound_seg_a = parse_segment("a")
 
     def test_length_mismatch(self):
         """Test that length mismatch returns False."""
@@ -198,9 +195,9 @@ class TestCheckMatch(unittest.TestCase):
         # This test depends on maniphono's feature system
         try:
             # Create a partial sound (sound with some features specified)
-            partial_sound = maniphono.Sound("p")
+            partial_sound = Sound("p")
             partial_sound.partial = True
-            partial_segment = maniphono.SoundSegment([partial_sound])
+            partial_segment = SoundSegment([partial_sound])
             
             sequence = [self.sound_seg_p]
             pattern = [SegmentToken(partial_segment)]
@@ -221,7 +218,7 @@ class TestMatchListInterpretation(unittest.TestCase):
     def test_false_vs_zero_distinction(self):
         """Test that False and 0 are distinguished in match results."""
         # This is important for set matching where 0 is a valid index
-        sequence = [maniphono.parse_segment("p")]
+        sequence = [parse_segment("p")]
         
         # Test with a set where first element matches
         pattern = [SetToken([SegmentToken("p"), SegmentToken("b")])]
@@ -235,10 +232,10 @@ class TestMatchListInterpretation(unittest.TestCase):
     def test_match_list_length_consistency(self):
         """Test that match list always has same length as input."""
         test_cases = [
-            ([maniphono.parse_segment("p")], [SegmentToken("p")]),
-            ([maniphono.parse_segment("p")], [SegmentToken("b")]),
-            ([maniphono.BoundarySegment()], [BoundaryToken()]),
-            ([maniphono.parse_segment("p"), maniphono.parse_segment("a")], 
+            ([parse_segment("p")], [SegmentToken("p")]),
+            ([parse_segment("p")], [SegmentToken("b")]),
+            ([BoundarySegment()], [BoundaryToken()]),
+            ([parse_segment("p"), parse_segment("a")], 
              [SegmentToken("p"), SegmentToken("a")]),
         ]
         
