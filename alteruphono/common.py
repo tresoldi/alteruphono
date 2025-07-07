@@ -4,7 +4,8 @@ Module with functions and values shared across different parts of the library.
 
 from typing import List, Tuple, Union
 
-from maniphono import Segment, SoundSegment, Sound
+from maniphono import SoundSegment, Sound
+from maniphono.segment import Segment
 
 from .model import Token, ChoiceToken, SetToken, SegmentToken, BoundaryToken
 

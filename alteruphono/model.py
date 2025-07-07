@@ -27,6 +27,7 @@ class Token:
 
 
 class BoundaryToken(Token):
+    """Token representing word or morpheme boundaries (#)."""
     def __init__(self):
         super().__init__()
 
@@ -80,9 +81,9 @@ class BackRefToken(Token):
 
     def __str__(self) -> str:
         if self.modifier:
-            return f"@{self.index}[{self.modifier}]"
+            return f"@{self.index + 1}[{self.modifier}]"
 
-        return f"@{self.index}"
+        return f"@{self.index + 1}"
 
     def __repr__(self) -> str:
         return f"backref_tok:{str(self)}"
@@ -148,6 +149,7 @@ class SetToken(Token):
 # named segment token to distinguish from the maniphono SoundSegment
 # TODO: rename `segment` argument
 class SegmentToken(Token):
+    """Token representing a phonological segment."""
     def __init__(self, segment: Union[str, Sound, SoundSegment]):
         super().__init__()
 
@@ -171,7 +173,7 @@ class SegmentToken(Token):
         return hash(self) == hash(other)
 
     def __ne__(self, other) -> bool:
-        return hash(self) == hash(other)
+        return hash(self) != hash(other)
 
     def add_modifier(self, modifier):
         # TODO: properly implement with the __add__ operation from maniphono

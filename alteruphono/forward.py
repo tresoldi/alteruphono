@@ -4,7 +4,8 @@ Module with functions for forward reconstruction.
 
 from typing import List, Union
 
-from maniphono import Segment, SegSequence
+from maniphono import SegSequence
+from maniphono.segment import Segment
 
 from .common import check_match
 from .parser import Rule

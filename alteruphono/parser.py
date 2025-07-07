@@ -24,6 +24,7 @@ RE_BACKREF_MOD = re.compile(r"^@(?P<index>\d+)\[(?P<mod>[^\]]+)\]$")
 
 # TODO: __repr__, __str__, and __hash__ should deal with ante and post, not source
 class Rule:
+    """Represents a sound change rule."""
     def __init__(self, source: str):
         self.source = source
 
@@ -108,6 +109,7 @@ def parse_seq_as_rule(seq):
 
 
 def parse_rule(rule: str) -> Tuple[List[Token], List[Token]]:
+    """Parse a sound change rule string into ante and post token sequences."""
     # Pre-process the rule and then split into `ante`, `post`, and `context`, which
     # are stripped of leading/trailing spaces. As features, feature values, and graphemes
     # cannot have the reserved ">" and "/" characters, this is very straightforward:

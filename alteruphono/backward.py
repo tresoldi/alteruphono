@@ -1,7 +1,8 @@
 import itertools
 from typing import List, Union, Tuple
 
-from maniphono import SegSequence, Sound, SoundSegment, Segment, BoundarySegment
+from maniphono import SegSequence, Sound, SoundSegment, BoundarySegment
+from maniphono.segment import Segment
 
 from .common import check_match
 from .model import (
@@ -112,6 +113,7 @@ def _carry_backref_modifier(ante_token: Token, post_token: BackRefToken) -> Toke
 # TODO: make sure it works with repeated backreferences, such as "V s > @1 z @1",
 # which we *cannot* have mapped only as "V z V"
 def backward(post_seq: SegSequence, rule: Rule) -> List[SegSequence]:
+    """Apply backward reconstruction to generate possible proto-forms."""
     # Compute the `post_ast`, applying modifiers and skipping nulls
     post_ast = [token for token in rule.post if not isinstance(token, EmptyToken)]
 
