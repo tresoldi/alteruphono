@@ -70,7 +70,8 @@ def check_match(
                 if not isinstance(token, SoundSegment):
                     ret_list.append(False)
                 else:
-                    ret_list.append(token.sounds[0] >= ref.segment.sounds[0])
+                    # For partial matching: pattern >= input (e.g., V >= a)
+                    ret_list.append(ref.segment.sounds[0] >= token.sounds[0])
         elif isinstance(ref, Sound):
             # TODO: check how similar to the above (ref.type==segment)
             # TODO: check why it is capturing as maniphono.sound.Sound and not SoundSegment
@@ -80,7 +81,8 @@ def check_match(
                 if not isinstance(token, SoundSegment):
                     ret_list.append(False)
                 else:
-                    ret_list.append(token.sounds[0] >= ref)
+                    # For partial matching: pattern >= input (e.g., V >= a)
+                    ret_list.append(ref >= token.sounds[0])
         elif isinstance(ref, BoundaryToken):
             ret_list.append(str(token) == "#")
 

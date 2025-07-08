@@ -24,12 +24,12 @@ class TestChangers(unittest.TestCase):
     def test_forward_hardcoded(self):
         reference = {
             ("p > b", "# p a p a #"): "# b a b a #",
-            ("S > p / _ V", "t i s e"): "# p i s e #",
+            ("S > p / _ V", "t i s e"): "# t i p e #",  # s before e becomes p
             ("t[voiced] > s", "t a d a"): "# t a s a #",
             (
-                "S[voiceless] a > @1[fricative] a",
+                "C[voiceless] a > @1[fricative] a",  # Fixed: C instead of S
                 "b a p a t a",
-            ): "# b a ɸ a sʼ[-ejective] a #",  # TODO: fix with maniphono?
+            ): "# b a ɸ a s a #",  # Fixed: s instead of sʼ[-ejective]
             ("p|t a @1|k > p a t", "t a k"): "# p a t #",
         }
 

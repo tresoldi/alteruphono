@@ -46,8 +46,20 @@ def _forward_translate(
             # Copy the backreference, adding the modifier (even if empty, the
             # phonomodel would only skip over it)
             token = sequence[entry.index]
-            token.add_fvalues(entry.modifier)
-            post_seq.append(token)
+            
+            # Create a copy to avoid modifying the original
+            if hasattr(token, 'copy'):
+                token_copy = token.copy()
+            else:
+                # Fallback: create a new segment with the same properties
+                from .phonology import SoundSegment
+                if hasattr(token, 'sounds'):
+                    token_copy = SoundSegment([sound.copy() for sound in token.sounds])
+                else:
+                    token_copy = token
+            
+            token_copy.add_fvalues(entry.modifier)
+            post_seq.append(token_copy)
 
     return post_seq
 

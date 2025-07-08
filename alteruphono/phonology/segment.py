@@ -134,6 +134,10 @@ class SoundSegment(Segment):
     def __hash__(self) -> int:
         """Hash based on the sounds."""
         return hash(tuple(self._sounds))
+    
+    def copy(self) -> 'SoundSegment':
+        """Create a copy of this segment."""
+        return SoundSegment([sound.copy() for sound in self._sounds])
 
 
 class BoundarySegment(Segment):

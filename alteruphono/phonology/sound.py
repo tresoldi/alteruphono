@@ -118,6 +118,8 @@ class Sound:
         """
         if isinstance(features, str):
             new_features = parse_features(features)
+        elif features is None:
+            new_features = frozenset()
         else:
             new_features = features
         
@@ -132,6 +134,33 @@ class Sound:
             elif feature == 'voiceless':
                 combined_features.discard('voiced')
                 combined_features.add('voiceless')
+            elif feature == 'fricative':
+                # Fricative opposes stop, affricate, nasal, etc.
+                combined_features.discard('stop')
+                combined_features.discard('affricate')
+                combined_features.discard('nasal')
+                combined_features.discard('lateral')
+                combined_features.discard('rhotic')
+                combined_features.discard('approximant')
+                combined_features.add('fricative')
+            elif feature == 'stop':
+                # Stop opposes fricative, nasal, etc.
+                combined_features.discard('fricative')
+                combined_features.discard('affricate')
+                combined_features.discard('nasal')
+                combined_features.discard('lateral')
+                combined_features.discard('rhotic')
+                combined_features.discard('approximant')
+                combined_features.add('stop')
+            elif feature == 'nasal':
+                # Nasal opposes other manner features
+                combined_features.discard('stop')
+                combined_features.discard('fricative')
+                combined_features.discard('affricate')
+                combined_features.discard('lateral')
+                combined_features.discard('rhotic')
+                combined_features.discard('approximant')
+                combined_features.add('nasal')
             elif feature.startswith('-'):
                 # Negative feature - remove the positive version
                 positive_feature = feature[1:]
@@ -144,7 +173,14 @@ class Sound:
         new_sound = Sound.__new__(Sound)
         new_sound._fvalues = frozenset(combined_features)
         new_sound._partial = self._partial
-        new_sound._grapheme = features_to_grapheme(new_sound._fvalues)
+        
+        # If original was a sound class, preserve that nature
+        if self._grapheme and len(self._grapheme) == 1 and get_class_features(self._grapheme):
+            # This was a sound class like S, V, C - keep it as such
+            new_sound._grapheme = self._grapheme
+        else:
+            # Regular grapheme - find best match
+            new_sound._grapheme = features_to_grapheme(new_sound._fvalues)
         
         return new_sound
     
@@ -189,9 +225,10 @@ class Sound:
         Args:
             features: Comma-separated feature string to add
         """
-        new_features = parse_features(features)
-        self._fvalues = self._fvalues | new_features
-        self._grapheme = features_to_grapheme(self._fvalues)
+        # Use the same logic as __add__ but modify in place
+        new_sound = self + features
+        self._fvalues = new_sound._fvalues
+        self._grapheme = new_sound._grapheme
     
     def copy(self) -> 'Sound':
         """Create a copy of this sound."""
