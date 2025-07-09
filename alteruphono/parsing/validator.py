@@ -7,7 +7,7 @@ such as feature compatibility, backreference validity, and context well-formedne
 
 from typing import List, Set, Dict, Tuple
 from .ast_nodes import *
-from .errors import PhonologicalError, SemanticError, ErrorCollector
+from .errors import PhonologicalError, SemanticError, ErrorCollector, ParseError
 
 
 class PhonologicalValidator(BaseASTVisitor):
@@ -34,6 +34,7 @@ class PhonologicalValidator(BaseASTVisitor):
     }
     
     # Feature dependencies - features that require other features
+    # Note: sound classes like V (vowel) and C (consonant) implicitly have these features
     FEATURE_DEPENDENCIES = {
         'high': 'vowel',
         'low': 'vowel', 
@@ -48,6 +49,12 @@ class PhonologicalValidator(BaseASTVisitor):
         'velar': 'consonant',
         'voiced': None,  # Can apply to vowels or consonants
         'voiceless': None,
+    }
+    
+    # Sound classes that implicitly have certain features
+    IMPLICIT_FEATURES = {
+        'V': ['vowel'],  # Vowel sound class
+        'C': ['consonant'],  # Consonant sound class
     }
     
     def __init__(self):
@@ -110,7 +117,7 @@ class PhonologicalValidator(BaseASTVisitor):
     def visit_sound_class(self, node: SoundClassNode) -> None:
         """Validate a sound class node."""
         if node.features:
-            self._validate_feature_spec(node.features, node.class_name)
+            self._validate_feature_spec(node.features, node.class_name, node.class_name)
     
     def visit_backref(self, node: BackRefNode) -> None:
         """Validate a backreference node."""
@@ -165,15 +172,21 @@ class PhonologicalValidator(BaseASTVisitor):
         for alt in node.alternatives:
             self.visit(alt)
     
-    def _validate_feature_spec(self, feature_spec: FeatureSpecNode, context: str) -> None:
+    def _validate_feature_spec(self, feature_spec: FeatureSpecNode, context: str, sound_class: str = None) -> None:
         """
         Validate a feature specification.
         
         Args:
             feature_spec: The feature specification to validate
             context: Description of where this feature spec appears (for error messages)
+            sound_class: The sound class name (if applicable) to check for implicit features
         """
         features = {}
+        
+        # Check if we have a sound class with implicit features
+        implicit_features = set()
+        if sound_class and sound_class in self.IMPLICIT_FEATURES:
+            implicit_features.update(self.IMPLICIT_FEATURES[sound_class])
         
         for feature_node in feature_spec.features:
             feature_name = feature_node.name
@@ -196,9 +209,9 @@ class PhonologicalValidator(BaseASTVisitor):
                         ]
                     ))
             
-            # Check feature dependencies
+            # Check feature dependencies (considering implicit features)
             dependency = self.FEATURE_DEPENDENCIES.get(feature_name)
-            if dependency and dependency not in [f for f, _ in features.items()]:
+            if dependency and dependency not in [f for f, _ in features.items()] and dependency not in implicit_features:
                 self.errors.add_error(PhonologicalError(
                     message=f"Feature '{feature_name}' in {context} requires '{dependency}' feature",
                     position=feature_node.position,
