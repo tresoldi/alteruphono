@@ -7,7 +7,7 @@ into an Abstract Syntax Tree representing phonological rules.
 
 from typing import List, Optional, Union
 from .lexer import Token, TokenType
-from .errors import SyntaxError, ErrorCollector
+from .errors import SyntaxError, ErrorCollector, ParseError, ErrorType
 from .ast_nodes import *
 
 
@@ -108,53 +108,76 @@ class Parser:
         """
         start_token = self.current_token()
         
-        try:
-            # Parse ante (left side of rule)
-            ante = self.parse_atom_sequence()
-            
-            # Consume arrow
-            self.consume(TokenType.ARROW, "Expected '>' after ante part of rule")
-            
-            # Parse post (right side of rule)
-            post = self.parse_atom_sequence()
-            
-            # Parse optional context
-            context = None
-            if self.match(TokenType.SLASH):
-                self.advance()  # consume /
-                context = self.parse_context()
-            
-            # Should be at end of rule
-            if not self.match(TokenType.EOF, TokenType.NEWLINE):
-                self.errors.add_error(SyntaxError(
-                    message="Unexpected tokens after rule",
-                    position=self.current_token().position,
-                    line=self.current_token().line,
-                    column=self.current_token().column,
-                    suggestions=["Rules should end after context or post part"]
-                ))
-            
-            return RuleNode(
-                ante=ante,
-                post=post,
-                context=context,
-                position=start_token.position,
-                line=start_token.line,
-                column=start_token.column
+        # Parse ante (left side of rule)
+        ante = self.parse_atom_sequence()
+        
+        # Consume arrow
+        if not self.match(TokenType.ARROW):
+            current = self.current_token()
+            raise ParseError(
+                type=ErrorType.SYNTAX,
+                message="Expected '>' after ante part of rule",
+                position=current.position,
+                line=current.line,
+                column=current.column,
+                suggestions=["Add '>' to separate ante and post parts"]
             )
-            
-        except SyntaxError as e:
-            self.errors.add_error(e)
-            self.synchronize()
-            
-            # Return a minimal rule node to continue
-            return RuleNode(
-                ante=AtomSequenceNode([], 0),
-                post=AtomSequenceNode([], 0),
-                position=start_token.position,
-                line=start_token.line,
-                column=start_token.column
+        
+        # Check for empty ante (starting with >)
+        if len(ante.atoms) == 0:
+            current = self.current_token()
+            raise ParseError(
+                type=ErrorType.SYNTAX,
+                message="Expected ante part of rule before '>'",
+                position=current.position,
+                line=current.line,
+                column=current.column,
+                suggestions=["Add a segment, sound class, or other atom before '>'"]
             )
+        
+        self.advance()  # consume >
+        
+        # Parse post (right side of rule)
+        post = self.parse_atom_sequence()
+        
+        # Check for empty post
+        if len(post.atoms) == 0:
+            current = self.current_token()
+            raise ParseError(
+                type=ErrorType.SYNTAX,
+                message="Expected post part of rule after '>'",
+                position=current.position,
+                line=current.line,
+                column=current.column,
+                suggestions=["Add a segment, sound class, or other atom after '>'"]
+            )
+        
+        # Parse optional context
+        context = None
+        if self.match(TokenType.SLASH):
+            self.advance()  # consume /
+            context = self.parse_context()
+        
+        # Should be at end of rule
+        if not self.match(TokenType.EOF, TokenType.NEWLINE):
+            current = self.current_token()
+            raise ParseError(
+                type=ErrorType.SYNTAX,
+                message="Unexpected tokens after rule",
+                position=current.position,
+                line=current.line,
+                column=current.column,
+                suggestions=["Rules should end after context or post part"]
+            )
+        
+        return RuleNode(
+            ante=ante,
+            post=post,
+            context=context,
+            position=start_token.position,
+            line=start_token.line,
+            column=start_token.column
+        )
     
     def parse_context(self) -> ContextNode:
         """
@@ -173,16 +196,19 @@ class Parser:
         
         while not self.match(TokenType.FOCUS, TokenType.EOF):
             atom = self.parse_atom()
-            left_atoms.append(atom)
+            if atom:
+                left_atoms.append(atom)
             focus_position += 1
         
         # Consume focus
         if not self.match(TokenType.FOCUS):
-            raise SyntaxError(
+            current = self.current_token()
+            raise ParseError(
+                type=ErrorType.SYNTAX,
                 message="Expected '_' (focus) in context",
-                position=self.current_token().position,
-                line=self.current_token().line,
-                column=self.current_token().column,
+                position=current.position,
+                line=current.line,
+                column=current.column,
                 suggestions=["Contexts must have a focus position marked with '_'"]
             )
         
@@ -192,7 +218,8 @@ class Parser:
         right_atoms = []
         while not self.match(TokenType.EOF, TokenType.NEWLINE):
             atom = self.parse_atom()
-            right_atoms.append(atom)
+            if atom:
+                right_atoms.append(atom)
         
         return ContextNode(
             left_context=AtomSequenceNode(left_atoms, start_token.position),
@@ -207,7 +234,7 @@ class Parser:
         """
         Parse a sequence of atoms.
         
-        Grammar: atom_sequence ::= atom+
+        Grammar: atom_sequence ::= atom*
         
         Returns:
             AtomSequenceNode containing the parsed atoms
@@ -215,20 +242,15 @@ class Parser:
         start_token = self.current_token()
         atoms = []
         
-        # Must have at least one atom
-        if self.match(TokenType.ARROW, TokenType.SLASH, TokenType.EOF):
-            raise SyntaxError(
-                message="Expected at least one atom in sequence",
-                position=start_token.position,
-                line=start_token.line,
-                column=start_token.column,
-                suggestions=["Add a segment, sound class, or other atom"]
-            )
-        
         # Parse atoms until we hit a delimiter
-        while not self.match(TokenType.ARROW, TokenType.SLASH, TokenType.EOF, TokenType.NEWLINE):
-            atom = self.parse_atom()
-            atoms.append(atom)
+        while not self.match(TokenType.ARROW, TokenType.SLASH, TokenType.EOF, TokenType.NEWLINE, TokenType.FOCUS):
+            # Check if we have a choice starting at this position
+            if self.has_choice_ahead():
+                atoms.append(self.parse_choice())
+            else:
+                atom = self.parse_atom()
+                if atom:
+                    atoms.append(atom)
         
         return AtomSequenceNode(
             atoms=atoms,
@@ -237,14 +259,14 @@ class Parser:
             column=start_token.column
         )
     
-    def parse_atom(self) -> AtomNode:
+    def parse_atom(self) -> Optional[AtomNode]:
         """
         Parse a single atom.
         
-        Grammar: atom ::= segment | sound_class | choice | set | backref | boundary | focus | null
+        Grammar: atom ::= segment | sound_class | set | backref | boundary | focus | null
         
         Returns:
-            AtomNode representing the parsed atom
+            AtomNode representing the parsed atom, or None if no valid atom found
         """
         token = self.current_token()
         
@@ -263,26 +285,16 @@ class Parser:
         elif token.type == TokenType.NULL:
             return self.parse_null()
         else:
-            # Check if this could be a choice (look for pipe)
-            # We need to look ahead to see if there's a pipe
-            if self.has_choice_ahead():
-                return self.parse_choice()
-            else:
-                raise SyntaxError(
-                    message=f"Unexpected token: {token.value}",
-                    position=token.position,
-                    line=token.line,
-                    column=token.column,
-                    suggestions=[
-                        "Expected segment, sound class, choice, set, backreference, boundary, focus, or null"
-                    ]
-                )
+            # Skip unknown token and continue
+            self.advance()
+            return None
     
     def has_choice_ahead(self) -> bool:
         """Check if there's a choice (pipe) ahead in the current sequence."""
         # Look ahead for a pipe within the current atom sequence
         temp_pos = self.position
-        depth = 0
+        bracket_depth = 0
+        brace_depth = 0
         
         while temp_pos < len(self.tokens):
             t = self.tokens[temp_pos]
@@ -290,10 +302,14 @@ class Parser:
             if t.type in (TokenType.ARROW, TokenType.SLASH, TokenType.EOF):
                 break
             elif t.type == TokenType.LBRACKET:
-                depth += 1
+                bracket_depth += 1
             elif t.type == TokenType.RBRACKET:
-                depth -= 1
-            elif t.type == TokenType.PIPE and depth == 0:
+                bracket_depth -= 1
+            elif t.type == TokenType.LBRACE:
+                brace_depth += 1
+            elif t.type == TokenType.RBRACE:
+                brace_depth -= 1
+            elif t.type == TokenType.PIPE and bracket_depth == 0 and brace_depth == 0:
                 return True
                 
             temp_pos += 1
@@ -430,12 +446,12 @@ class Parser:
                 suggestions=["Add at least one alternative inside { }"]
             )
         
-        alternatives.append(self.parse_atom())
+        alternatives.append(self.parse_atom_no_set())
         
         # Parse remaining alternatives
         while self.match(TokenType.PIPE):
             self.advance()  # consume |
-            alternatives.append(self.parse_atom())
+            alternatives.append(self.parse_atom_no_set())
         
         self.consume(TokenType.RBRACE, "Expected '}' to close set")
         
@@ -445,6 +461,29 @@ class Parser:
             line=start_token.line,
             column=start_token.column
         )
+    
+    def parse_atom_no_set(self) -> AtomNode:
+        """Parse an atom that cannot be a set (to avoid recursion in set parsing)."""
+        token = self.current_token()
+        
+        if token.type == TokenType.GRAPHEME:
+            return self.parse_segment()
+        elif token.type == TokenType.SOUND_CLASS:
+            return self.parse_sound_class()
+        elif token.type == TokenType.BACKREF:
+            return self.parse_backref()
+        elif token.type == TokenType.BOUNDARY:
+            return self.parse_boundary()
+        elif token.type == TokenType.NULL:
+            return self.parse_null()
+        else:
+            raise SyntaxError(
+                message=f"Unexpected token in set: {token.value}",
+                position=token.position,
+                line=token.line,
+                column=token.column,
+                suggestions=["Use segment, sound class, backref, boundary, or null in sets"]
+            )
     
     def parse_backref(self) -> BackRefNode:
         """

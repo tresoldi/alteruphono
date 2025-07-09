@@ -116,7 +116,7 @@ class Lexer:
     }
     
     # Units for numeric features (future extension)
-    UNITS = {'Hz', 'ms', 's', 'khz', 'Khz', 'KHz'}
+    UNITS = {'Hz', 'ms', 'khz', 'Khz', 'KHz'}
     
     # Prosodic unit symbols (future extension) 
     PROSODIC_SYMBOLS = {
