@@ -11,7 +11,12 @@ from .models import (
     get_class_features, 
     parse_features, 
     features_to_grapheme,
-    normalize_feature
+    normalize_feature,
+    is_suprasegmental_feature,
+    is_numeric_feature,
+    get_numeric_value,
+    increment_numeric_feature,
+    decrement_numeric_feature
 )
 
 
@@ -109,6 +114,7 @@ class Sound:
         Add features to this sound, returning a new Sound.
         
         This implements feature arithmetic like: p + voiced = b
+        Also supports suprasegmental and numeric features.
         
         Args:
             features: Either a string like 'voiced,long' or a feature set
@@ -161,6 +167,29 @@ class Sound:
                 combined_features.discard('rhotic')
                 combined_features.discard('approximant')
                 combined_features.add('nasal')
+            elif feature.startswith('stress'):
+                # Remove other stress features when adding new one
+                combined_features = {f for f in combined_features if not f.startswith('stress') and f != 'unstressed'}
+                combined_features.add(feature)
+            elif feature == 'unstressed':
+                # Remove stress features when making unstressed
+                combined_features = {f for f in combined_features if not f.startswith('stress')}
+                combined_features.add('unstressed')
+            elif feature.startswith('tone'):
+                # Remove other tone features when adding new one
+                combined_features = {f for f in combined_features if not (f.startswith('tone') or f in ['rising', 'falling', 'level'])}
+                combined_features.add(feature)
+            elif feature in ['rising', 'falling', 'level']:
+                # Tone contour features - remove conflicting ones
+                combined_features.discard('rising')
+                combined_features.discard('falling') 
+                combined_features.discard('level')
+                combined_features.add(feature)
+            elif is_numeric_feature(feature):
+                # Handle numeric features - replace similar ones
+                prefix = feature.split('_')[0] if '_' in feature else feature.rstrip('0123456789')
+                combined_features = {f for f in combined_features if not f.startswith(prefix)}
+                combined_features.add(feature)
             elif feature.startswith('-'):
                 # Negative feature - remove the positive version
                 positive_feature = feature[1:]
@@ -237,3 +266,77 @@ class Sound:
         new_sound._partial = self._partial
         new_sound._grapheme = self._grapheme
         return new_sound
+    
+    def increment_feature(self, feature_type: str, amount: int = 1) -> 'Sound':
+        """
+        Increment a numeric feature by the given amount.
+        
+        Args:
+            feature_type: The feature type to increment (e.g., 'tone', 'f0', 'duration')
+            amount: Amount to increment by (default 1)
+            
+        Returns:
+            New Sound with incremented feature
+        """
+        new_sound = self.copy()
+        combined_features = set(new_sound._fvalues)
+        
+        # Find existing feature of this type
+        for feature in list(combined_features):
+            if feature.startswith(feature_type):
+                combined_features.remove(feature)
+                new_feature = increment_numeric_feature(feature, amount)
+                combined_features.add(new_feature)
+                break
+        else:
+            # No existing feature, add the base one
+            if feature_type in ['tone', 'f0', 'duration']:
+                combined_features.add(f"{feature_type}_{amount}")
+        
+        new_sound._fvalues = frozenset(combined_features)
+        return new_sound
+    
+    def decrement_feature(self, feature_type: str, amount: int = 1) -> 'Sound':
+        """
+        Decrement a numeric feature by the given amount.
+        
+        Args:
+            feature_type: The feature type to decrement (e.g., 'tone', 'f0', 'duration')
+            amount: Amount to decrement by (default 1)
+            
+        Returns:
+            New Sound with decremented feature
+        """
+        return self.increment_feature(feature_type, -amount)
+    
+    def get_suprasegmental_features(self) -> FrozenSet[str]:
+        """Get only the suprasegmental features of this sound."""
+        return frozenset(f for f in self._fvalues if is_suprasegmental_feature(f))
+    
+    def get_segmental_features(self) -> FrozenSet[str]:
+        """Get only the segmental (non-suprasegmental) features of this sound."""
+        return frozenset(f for f in self._fvalues if not is_suprasegmental_feature(f))
+    
+    def has_stress(self) -> bool:
+        """Check if this sound has any stress marking."""
+        return any(f.startswith('stress') for f in self._fvalues)
+    
+    def has_tone(self) -> bool:
+        """Check if this sound has any tone marking."""
+        return any(f.startswith('tone') or f in ['rising', 'falling', 'level'] for f in self._fvalues)
+    
+    def get_stress_level(self) -> int:
+        """Get the stress level (0=unstressed, 1=primary, 2=secondary)."""
+        if 'stress1' in self._fvalues:
+            return 1
+        elif 'stress2' in self._fvalues:
+            return 2
+        else:
+            return 0
+    
+    def get_tone_value(self) -> int:
+        """Get the tone value (1-5), or 0 if no tone."""
+        for feature in self._fvalues:
+            if feature.startswith('tone') and len(feature) > 4:
+                return get_numeric_value(feature)
+        return 0

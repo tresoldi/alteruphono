@@ -103,6 +103,36 @@ FEATURE_MAPPINGS: Dict[str, str] = {
     '+long': 'long',
     '-long': 'short',
     
+    # Stress features (suprasegmental)
+    'stress1': 'stress1',      # Primary stress
+    'stress2': 'stress2',      # Secondary stress
+    'unstressed': 'unstressed',
+    '+stress': 'stress1',
+    '-stress': 'unstressed',
+    
+    # Tone features (suprasegmental)
+    'tone1': 'tone1',          # High tone
+    'tone2': 'tone2',          # Mid tone  
+    'tone3': 'tone3',          # Low tone
+    'tone4': 'tone4',          # Extra low tone
+    'tone5': 'tone5',          # Extra high tone
+    'rising': 'rising',
+    'falling': 'falling',
+    'level': 'level',
+    'high': 'tone1',
+    'mid': 'tone2',
+    'low': 'tone3',
+    
+    # Numeric features (for gradience)
+    'f0_1': 'f0_1',            # Fundamental frequency level 1
+    'f0_2': 'f0_2',            # Fundamental frequency level 2
+    'f0_3': 'f0_3',            # Fundamental frequency level 3
+    'f0_4': 'f0_4',            # Fundamental frequency level 4
+    'f0_5': 'f0_5',            # Fundamental frequency level 5
+    'duration_1': 'duration_1', # Duration level 1 (shortest)
+    'duration_2': 'duration_2', # Duration level 2
+    'duration_3': 'duration_3', # Duration level 3 (longest)
+    
     # Other common features
     'ejective': 'ejective',
     '+ejective': 'ejective',
@@ -152,3 +182,43 @@ def features_to_grapheme(features: FrozenSet[str]) -> str:
             best_match = grapheme
     
     return best_match or '?'
+
+def is_suprasegmental_feature(feature: str) -> bool:
+    """Check if a feature is suprasegmental (stress, tone, etc.)."""
+    suprasegmental_prefixes = ['stress', 'tone', 'f0_', 'duration_', 'rising', 'falling', 'level', 'unstressed']
+    return any(feature.startswith(prefix) or feature == prefix for prefix in suprasegmental_prefixes)
+
+def is_numeric_feature(feature: str) -> bool:
+    """Check if a feature has numeric values."""
+    numeric_prefixes = ['f0_', 'duration_', 'tone']
+    return any(feature.startswith(prefix) for prefix in numeric_prefixes)
+
+def get_numeric_value(feature: str) -> int:
+    """Extract numeric value from a numeric feature."""
+    if '_' in feature:
+        parts = feature.split('_')
+        if len(parts) == 2 and parts[1].isdigit():
+            return int(parts[1])
+    elif feature.startswith('tone') and len(feature) > 4 and feature[4:].isdigit():
+        return int(feature[4:])
+    return 0
+
+def increment_numeric_feature(feature: str, amount: int = 1) -> str:
+    """Increment a numeric feature by the given amount."""
+    if not is_numeric_feature(feature):
+        return feature
+    
+    current_value = get_numeric_value(feature)
+    new_value = max(1, current_value + amount)  # Minimum value is 1
+    
+    if '_' in feature:
+        prefix = feature.split('_')[0]
+        return f"{prefix}_{new_value}"
+    elif feature.startswith('tone'):
+        return f"tone{new_value}"
+    
+    return feature
+
+def decrement_numeric_feature(feature: str, amount: int = 1) -> str:
+    """Decrement a numeric feature by the given amount."""
+    return increment_numeric_feature(feature, -amount)

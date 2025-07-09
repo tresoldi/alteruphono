@@ -5,6 +5,7 @@ Module holding the classes for the manipulation of sound changes.
 from typing import Union
 
 from .phonology import parse_segment, Sound, SoundSegment
+from .phonology.prosody import ProsodicBoundary, BoundaryType
 
 # TODO: all tokens should have a method to return a corresponding segment
 
@@ -28,18 +29,34 @@ class Token:
 
 class BoundaryToken(Token):
     """Token representing word or morpheme boundaries (#)."""
-    def __init__(self):
+    def __init__(self, boundary_type: str = "#"):
         super().__init__()
+        self.boundary_type = boundary_type
 
     def __str__(self) -> str:
-        return "#"
+        return self.boundary_type
 
     def __repr__(self) -> str:
         return f"boundary_tok:{str(self)}"
 
     def __hash__(self) -> int:
-        # TODO: all boundaries are equal here, but we should differentiate ^ and $
-        return hash(1)
+        return hash(self.boundary_type)
+
+
+class ProsodicBoundaryToken(Token):
+    """Token representing prosodic boundaries (syllable, foot, etc.)."""
+    def __init__(self, boundary: ProsodicBoundary):
+        super().__init__()
+        self.boundary = boundary
+
+    def __str__(self) -> str:
+        return str(self.boundary)
+
+    def __repr__(self) -> str:
+        return f"prosodic_boundary_tok:{str(self)}"
+
+    def __hash__(self) -> int:
+        return hash(self.boundary)
 
 
 class FocusToken(Token):
@@ -182,3 +199,24 @@ class SegmentToken(Token):
         sound = Sound(grapheme) + modifier
         segment = SoundSegment(sound)
         self.segment = segment
+    
+    def has_suprasegmental_features(self) -> bool:
+        """Check if this segment has suprasegmental features."""
+        from .phonology.models import is_suprasegmental_feature
+        return any(is_suprasegmental_feature(str(feature)) 
+                  for sound in self.segment.sounds 
+                  for feature in sound.fvalues)
+    
+    def get_stress_level(self) -> int:
+        """Get stress level of this segment (0=unstressed, 1=primary, 2=secondary)."""
+        for sound in self.segment.sounds:
+            if sound.has_stress():
+                return sound.get_stress_level()
+        return 0
+    
+    def get_tone_value(self) -> int:
+        """Get tone value of this segment (1-5), or 0 if no tone."""
+        for sound in self.segment.sounds:
+            if sound.has_tone():
+                return sound.get_tone_value()
+        return 0

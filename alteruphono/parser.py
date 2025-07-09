@@ -5,6 +5,7 @@ from typing import List, Tuple
 from .model import (
     Token,
     BoundaryToken,
+    ProsodicBoundaryToken,
     FocusToken,
     EmptyToken,
     BackRefToken,
@@ -12,6 +13,7 @@ from .model import (
     SetToken,
     SegmentToken,
 )
+from .phonology.prosody import ProsodicBoundary, BoundaryType
 
 # TODO: context must have a focus
 
@@ -80,6 +82,21 @@ def parse_atom(atom_str: str) -> Token:
         return ChoiceToken(choices)
     elif atom_str == "#":
         return BoundaryToken()
+    elif atom_str == "σ":
+        return ProsodicBoundaryToken(ProsodicBoundary(BoundaryType.SYLLABLE))
+    elif atom_str == "Ft":
+        return ProsodicBoundaryToken(ProsodicBoundary(BoundaryType.FOOT))
+    elif atom_str == "φ":
+        return ProsodicBoundaryToken(ProsodicBoundary(BoundaryType.PHRASE))
+    elif atom_str == "U":
+        return ProsodicBoundaryToken(ProsodicBoundary(BoundaryType.UTTERANCE))
+    elif atom_str.startswith("#") and len(atom_str) > 1:
+        # Word boundary with strength marker (e.g., "#2")
+        try:
+            strength = int(atom_str[1:])
+            return BoundaryToken(f"#{strength}")
+        except ValueError:
+            return BoundaryToken(atom_str)
     elif atom_str == "_":
         return FocusToken()
     elif atom_str == ":null:":

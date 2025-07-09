@@ -4,14 +4,15 @@
 __init__ module for the `alteruphono` package.
 """
 
-# Version of the alteruphono package
-__version__ = "0.6.0"
+# Version of the alteruphono package  
+__version__ = "0.7.0"  # Phase 4: Suprasegmental and numeric features
 __author__ = "Tiago Tresoldi"
 __email__ = "tiago.tresoldi@lingfil.uu.se"
 
 # Build the namespace
 from alteruphono.model import (
     BoundaryToken,
+    ProsodicBoundaryToken,  # Phase 4: Prosodic boundaries
     FocusToken,
     EmptyToken,
     BackRefToken,
