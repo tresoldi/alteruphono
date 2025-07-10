@@ -21,7 +21,15 @@ from .base import (
 )
 from .ipa_categorical import IPACategoricalSystem
 from .unified_distinctive import UnifiedDistinctiveSystem
+from .tresoldi_distinctive import TresoldiDistinctiveSystem
 from .registry import get_feature_system, register_feature_system, list_feature_systems, get_default_feature_system, set_default_feature_system
+from .conversion_utils import (
+    convert_between_systems,
+    get_system_compatibility_matrix,
+    convert_sound_between_systems,
+    analyze_conversion_quality,
+    FeatureSystemConverter
+)
 
 # Import to trigger registration
 from . import registry_init
@@ -40,6 +48,7 @@ __all__ = [
     # Built-in systems
     'IPACategoricalSystem',
     'UnifiedDistinctiveSystem',
+    'TresoldiDistinctiveSystem',
     
     # Registry functions
     'get_feature_system',
@@ -47,6 +56,13 @@ __all__ = [
     'list_feature_systems',
     'get_default_feature_system',
     'set_default_feature_system',
+    
+    # Conversion utilities
+    'convert_between_systems',
+    'get_system_compatibility_matrix',
+    'convert_sound_between_systems',
+    'analyze_conversion_quality',
+    'FeatureSystemConverter',
     
     # Configuration
     'DEFAULT_FEATURE_SYSTEM'
