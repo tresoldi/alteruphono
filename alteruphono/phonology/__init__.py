@@ -10,7 +10,8 @@ Phase 4 adds support for suprasegmental features (stress, tone, length),
 numeric feature values, and prosodic hierarchy representation.
 """
 
-from .sound import Sound
+from .sound_compat import Sound  # Backward-compatible Sound class
+from .sound_v2 import Sound as EnhancedSound  # New enhanced Sound class
 from .segment import Segment, SoundSegment, BoundarySegment
 from .sequence import SegSequence
 from .parsing import parse_segment, parse_sequence
@@ -32,7 +33,8 @@ from .models import (
 
 __all__ = [
     # Core phonology
-    'Sound',
+    'Sound',              # Backward-compatible Sound class
+    'EnhancedSound',      # New enhanced Sound class
     'Segment', 
     'SoundSegment',
     'BoundarySegment',
