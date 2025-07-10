@@ -91,7 +91,7 @@ class FeatureBundle:
     partial: bool = False  # Whether this is a partial/underspecified bundle
     
     def __post_init__(self):
-        """Validate feature bundle consistency."""
+        """Validate feature bundle consistency and build optimization caches."""
         # Check for conflicting features (same feature name, different values)
         feature_names = {}
         for fval in self.features:
@@ -100,17 +100,18 @@ class FeatureBundle:
                 if not fval.is_compatible_with(existing):
                     raise ValueError(f"Conflicting values for feature {fval.feature}: {existing.value} vs {fval.value}")
             feature_names[fval.feature] = fval
+        
+        # Build optimization caches
+        object.__setattr__(self, '_feature_dict', feature_names)
+        object.__setattr__(self, '_feature_names', frozenset(feature_names.keys()))
     
     def get_feature(self, feature_name: str) -> Optional[FeatureValue]:
         """Get a specific feature value by name."""
-        for fval in self.features:
-            if fval.feature == feature_name:
-                return fval
-        return None
+        return getattr(self, '_feature_dict', {}).get(feature_name)
     
     def has_feature(self, feature_name: str) -> bool:
         """Check if bundle contains a specific feature."""
-        return self.get_feature(feature_name) is not None
+        return feature_name in getattr(self, '_feature_names', set())
     
     def add_feature(self, feature_value: FeatureValue) -> 'FeatureBundle':
         """Add or replace a feature value, returning new bundle."""

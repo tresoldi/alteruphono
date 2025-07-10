@@ -27,6 +27,10 @@ class IPACategoricalSystem(FeatureSystem):
         self._grapheme_features = self._build_grapheme_features()
         self._class_features = self._build_class_features()
         self._feature_mappings = self._build_feature_mappings()
+        
+        # Performance optimizations
+        self._grapheme_cache = {}
+        self._features_cache = {}
     
     @property
     def name(self) -> str:
@@ -217,19 +221,26 @@ class IPACategoricalSystem(FeatureSystem):
     
     def grapheme_to_features(self, grapheme: str) -> Optional[FeatureBundle]:
         """Convert a grapheme to its feature representation."""
+        # Check cache first
+        if grapheme in self._grapheme_cache:
+            return self._grapheme_cache[grapheme]
+        
+        result = None
         # Check regular graphemes
         if grapheme in self._grapheme_features:
             feature_strings = self._grapheme_features[grapheme]
-            return self._string_features_to_bundle(feature_strings)
+            result = self._string_features_to_bundle(feature_strings)
         
         # Check sound classes
-        if grapheme in self._class_features:
+        elif grapheme in self._class_features:
             feature_strings = self._class_features[grapheme]
             bundle = self._string_features_to_bundle(feature_strings)
             # Sound classes are partial by definition
-            return FeatureBundle(bundle.features, partial=True)
+            result = FeatureBundle(bundle.features, partial=True)
         
-        return None
+        # Cache the result (including None)
+        self._grapheme_cache[grapheme] = result
+        return result
     
     def features_to_grapheme(self, features: FeatureBundle) -> str:
         """Convert features back to best-matching grapheme."""

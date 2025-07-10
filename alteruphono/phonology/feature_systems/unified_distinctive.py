@@ -11,6 +11,7 @@ computational analysis and gradient phonological phenomena.
 """
 
 import math
+import functools
 from typing import Dict, List, Optional, Set, Tuple
 from .base import (
     FeatureSystem,
@@ -36,6 +37,11 @@ class UnifiedDistinctiveSystem(FeatureSystem):
         self._feature_definitions = self._build_feature_definitions()
         self._grapheme_features = self._build_grapheme_features()
         self._sound_classes = self._build_sound_classes()
+        
+        # Performance optimizations
+        self._grapheme_cache = {}
+        self._features_cache = {}
+        self._distance_cache = {}
     
     @property
     def name(self) -> str:
@@ -300,6 +306,11 @@ class UnifiedDistinctiveSystem(FeatureSystem):
     
     def grapheme_to_features(self, grapheme: str) -> Optional[FeatureBundle]:
         """Convert a grapheme to unified distinctive features."""
+        # Check cache first
+        if grapheme in self._grapheme_cache:
+            return self._grapheme_cache[grapheme]
+        
+        result = None
         if grapheme in self._grapheme_features:
             feature_dict = self._grapheme_features[grapheme]
             feature_values = {
@@ -310,10 +321,10 @@ class UnifiedDistinctiveSystem(FeatureSystem):
                 )
                 for fname, fvalue in feature_dict.items()
             }
-            return FeatureBundle(frozenset(feature_values))
+            result = FeatureBundle(frozenset(feature_values))
         
         # Check sound classes
-        if grapheme in self._sound_classes:
+        elif grapheme in self._sound_classes:
             feature_dict = self._sound_classes[grapheme]
             feature_values = {
                 FeatureValue(
@@ -323,12 +334,19 @@ class UnifiedDistinctiveSystem(FeatureSystem):
                 )
                 for fname, fvalue in feature_dict.items()
             }
-            return FeatureBundle(frozenset(feature_values), partial=True)
+            result = FeatureBundle(frozenset(feature_values), partial=True)
         
-        return None
+        # Cache the result (including None)
+        self._grapheme_cache[grapheme] = result
+        return result
     
     def features_to_grapheme(self, features: FeatureBundle) -> str:
         """Convert features to best-matching grapheme using distance metrics."""
+        # Check cache first
+        features_key = frozenset(features.features)
+        if features_key in self._features_cache:
+            return self._features_cache[features_key]
+        
         best_grapheme = '?'
         best_distance = float('inf')
         
@@ -344,6 +362,8 @@ class UnifiedDistinctiveSystem(FeatureSystem):
                 best_distance = distance
                 best_grapheme = grapheme
         
+        # Cache the result
+        self._features_cache[features_key] = best_grapheme
         return best_grapheme
     
     def parse_feature_specification(self, spec: str) -> FeatureBundle:
