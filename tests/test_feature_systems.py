@@ -395,13 +395,13 @@ class TestSoundWithFeatureSystems(unittest.TestCase):
         self.assertTrue(ipa_voiced.has_feature('voiced'))
         self.assertFalse(ipa_voiced.has_feature('voiceless'))
         
-        # Unified distinctive
+        # Unified distinctive - additive behavior
         unified_p = Sound(grapheme='p', feature_system='unified_distinctive')
-        unified_voiced = unified_p + 'voice=1.0'
+        unified_voiced = unified_p + 'voice=2.0'  # Need to add 2.0 to get from -1.0 to 1.0
         
         voice_val = unified_voiced.get_feature_value('voice')
         self.assertIsNotNone(voice_val)
-        self.assertEqual(voice_val, 1.0)
+        self.assertEqual(voice_val, 1.0)  # -1.0 + 2.0 = 1.0
     
     def test_sound_distance(self):
         """Test distance calculations between sounds."""

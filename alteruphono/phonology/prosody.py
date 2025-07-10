@@ -311,7 +311,7 @@ def syllabify_sounds(sounds: List[Sound]) -> List[Syllable]:
                 syllables.append(Syllable(
                     onset=current_onset[:],
                     nucleus=current_nucleus[:],
-                    coda=current_coda[:]
+                    coda=[]  # Don't assign consonants to coda yet
                 ))
                 current_onset = current_coda[:]  # Coda becomes next onset
                 current_nucleus = []

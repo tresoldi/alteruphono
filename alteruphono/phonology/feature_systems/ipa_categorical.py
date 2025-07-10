@@ -157,9 +157,9 @@ class IPACategoricalSystem(FeatureSystem):
             'rising': 'rising',
             'falling': 'falling',
             'level': 'level',
-            'high': 'tone1',
-            'mid': 'tone2',
-            'low': 'tone3',
+            'high_tone': 'tone1',
+            'mid_tone': 'tone2',
+            'low_tone': 'tone3',
             
             # Numeric features (for gradience)
             'f0_1': 'f0_1',

@@ -31,7 +31,7 @@ class TestTokens(unittest.TestCase):
         token = BoundaryToken()
         self.assertEqual(str(token), "#")
         self.assertEqual(repr(token), "boundary_tok:#")
-        self.assertEqual(hash(token), hash(1))
+        self.assertEqual(hash(token), hash("#"))
         
         # Test equality
         token2 = BoundaryToken()

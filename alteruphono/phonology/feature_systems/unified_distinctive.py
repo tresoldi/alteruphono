@@ -387,8 +387,7 @@ class UnifiedDistinctiveSystem(FeatureSystem):
                 fname = fname.strip()
                 try:
                     fvalue = float(fvalue_str.strip())
-                    # Clamp to valid range
-                    fvalue = max(-1.0, min(1.0, fvalue))
+                    # Don't clamp here - allow out-of-range values for arithmetic
                     features.add(FeatureValue(
                         feature=fname,
                         value=fvalue,

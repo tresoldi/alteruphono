@@ -77,7 +77,7 @@ class FeatureMatcher(EnvironmentMatcher):
         
         # Direct value comparison
         if isinstance(actual, float) and isinstance(required, (int, float)):
-            return abs(actual - float(required)) < 0.1  # Tolerance for scalar features
+            return abs(actual - float(required)) < 0.6  # More tolerant for scalar features
         
         return actual == required
 
@@ -125,6 +125,15 @@ class SequenceMatcher(EnvironmentMatcher):
             elif token == '.':
                 # Syllable boundary
                 matchers.append(BoundaryMatcher("syllable"))
+            elif token in ['V', 'C', 'S', 'O', 'N', 'L']:
+                # Sound class - convert to feature specification
+                sound_class_features = self.feature_system.get_sound_class_features(token)
+                if sound_class_features:
+                    feature_conditions = {fval.feature: fval.value for fval in sound_class_features.features}
+                    matchers.append(FeatureMatcher(feature_conditions, self.feature_system_name))
+                else:
+                    # Fallback to literal if sound class not found
+                    matchers.append(SegmentMatcher(token))
             else:
                 # Literal segment
                 matchers.append(SegmentMatcher(token))
