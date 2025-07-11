@@ -1,0 +1,33 @@
+name: Version Consistency Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  check-version-consistency:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Check version consistency
+      run: |
+        python scripts/check_version_consistency.py
+        
+    - name: Verify setup.py version extraction
+      run: |
+        echo "Version from setup.py: $(python setup.py --version)"
+        echo "Version from __init__.py: $(python -c 'import alteruphono; print(alteruphono.__version__)')"
+        
+    - name: Test package installation
+      run: |
+        pip install -e .
+        python -c "import alteruphono; print(f'Successfully imported AlteruPhono v{alteruphono.__version__}')"
