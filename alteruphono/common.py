@@ -7,6 +7,7 @@ from typing import List, Tuple, Union
 from .phonology import SoundSegment, Sound, Segment
 
 from .model import Token, ChoiceToken, SetToken, SegmentToken, BoundaryToken
+from .exceptions import ValidationError
 
 
 # Note that we need to return a list because in the check_match we are retuning
@@ -22,7 +23,54 @@ def check_match(
 ) -> Tuple[bool, List[Union[Segment, bool, int]]]:
     """
     Check if a sequence matches a given pattern.
+
+    Args:
+        sequence: List of phonological segments to match against
+        pattern: List of tokens representing the pattern to match
+
+    Returns:
+        Tuple of (match_found, match_details) where match_details contains
+        False for no match, True/index for matches, or segment for choice matches
+
+    Raises:
+        ValidationError: If inputs are invalid types or None
     """
+    # Input validation
+    if sequence is None:
+        raise ValidationError(
+            "Sequence cannot be None",
+            parameter_name="sequence",
+            provided_value=sequence,
+            expected_type="List[Segment]",
+            suggestions=["Provide a valid list of phonological segments"],
+        )
+
+    if pattern is None:
+        raise ValidationError(
+            "Pattern cannot be None",
+            parameter_name="pattern",
+            provided_value=pattern,
+            expected_type="List[Token]",
+            suggestions=["Provide a valid list of tokens representing the pattern"],
+        )
+
+    if not isinstance(sequence, list):
+        raise ValidationError(
+            f"Sequence must be a list, got {type(sequence).__name__}",
+            parameter_name="sequence",
+            provided_value=type(sequence).__name__,
+            expected_type="List[Segment]",
+            suggestions=["Convert sequence to a list of segments"],
+        )
+
+    if not isinstance(pattern, list):
+        raise ValidationError(
+            f"Pattern must be a list, got {type(pattern).__name__}",
+            parameter_name="pattern",
+            provided_value=type(pattern).__name__,
+            expected_type="List[Token]",
+            suggestions=["Convert pattern to a list of tokens"],
+        )
 
     # If there is a length mismatch, it does not match by definition. Note that
     # standard forward and backward operations will never pass sequences and patterns

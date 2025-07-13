@@ -4,6 +4,7 @@ from typing import List, Union, Tuple
 from .phonology import SegSequence, Sound, SoundSegment, BoundarySegment, Segment
 
 from .common import check_match
+from .exceptions import SoundError
 from .model import (
     Token,
     BackRefToken,
@@ -18,7 +19,7 @@ from .parser import Rule
 
 def _backward_translate(
     sequence: List[Segment], rule: Rule, match_info: List[Union[Segment, bool, int]]
-): # ->Tuple[List[Segment], List[Segment]]
+):  # ->Tuple[List[Segment], List[Segment]]
     # Make a copy of the ANTE as a "recons"tructed sequence; this will later be
     # modified by back-references from the sequence that was matched
     recons = []
@@ -87,14 +88,27 @@ def _carry_backref_modifier(ante_token: Token, post_token: BackRefToken) -> Toke
     if post_token.modifier:
         if isinstance(ante_token, SegmentToken):  # TODO: only monosonic...
             if len(ante_token.segment.sounds) != 1:
-                raise ValueError("only monosonic")
+                raise SoundError(
+                    f"Cannot apply modifier to polysonic segment: {ante_token.segment}",
+                    context={
+                        "segment": str(ante_token.segment),
+                        "sound_count": len(ante_token.segment.sounds),
+                        "modifier": post_token.modifier,
+                    },
+                    suggestions=[
+                        "Use monosonic segments for modifier application",
+                        "Break polysonic segments into individual sounds",
+                        "Consider using different rule formulation",
+                    ],
+                    error_code="E203",
+                )
 
             # make a copy
             # TODO: can address directly .segment instead of .segment.sound[0]?
             snd = ante_token.segment.sounds[0] + post_token.modifier
             return SegmentToken(snd)
-            #x = ante_token.segment.sounds[0]
-            #return x + post_token.modifier
+            # x = ante_token.segment.sounds[0]
+            # return x + post_token.modifier
 
         # TODO: can we join choice and set into a single signature?
         elif isinstance(ante_token, SetToken):
@@ -117,9 +131,11 @@ def backward(post_seq: SegSequence, rule: Rule) -> List[SegSequence]:
     post_ast = [token for token in rule.post if not isinstance(token, EmptyToken)]
 
     post_ast = [
-        token
-        if not isinstance(token, BackRefToken)
-        else _carry_backref_modifier(rule.ante[token.index], token)
+        (
+            token
+            if not isinstance(token, BackRefToken)
+            else _carry_backref_modifier(rule.ante[token.index], token)
+        )
         for token in post_ast
     ]
 

@@ -144,7 +144,17 @@ def parse_rule(rule: str) -> Tuple[List[Token], List[Token]]:
     elif (match := re.match(RE_RULE_NOCTX, rule)) is not None:
         ante, post, context = match.group("ante"), match.group("post"), None
     else:
-        raise ValueError("Unable to parse rule `rule`")
+        from .exceptions import RuleSyntaxError
+        raise RuleSyntaxError(
+            f"Unable to parse sound change rule: '{rule}'",
+            rule=rule,
+            suggestions=[
+                "Use format: 'source > target' or 'source > target / left_context _ right_context'",
+                "Check for proper spacing around '>' and '/' operators",
+                "Ensure all brackets and quotes are properly closed",
+                "Example: 'p > f / # _' (p becomes f word-initially)"
+            ]
+        )
 
     # Strip ante, post and context
     ante_seq = [parse_atom(atom) for atom in ante.strip().split()]

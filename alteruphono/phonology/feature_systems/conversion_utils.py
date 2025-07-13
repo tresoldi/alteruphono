@@ -81,7 +81,8 @@ class FeatureSystemConverter:
                     from_names = {f.feature for f in from_features.features}
                     to_names = {f.feature for f in to_features.features}
                     overlapping_features.update(from_names & to_names)
-            except:
+            except (ValueError, KeyError, AttributeError) as e:
+                # Feature system doesn't support this sound or conversion failed
                 continue
         
         return overlapping_features
@@ -149,12 +150,14 @@ class FeatureSystemConverter:
         
         try:
             from_features = set(from_sys.get_feature_names())
-        except:
+        except (AttributeError, NotImplementedError) as e:
+            # Feature system doesn't support get_feature_names method
             pass
         
         try:
             to_features = set(to_sys.get_feature_names())
-        except:
+        except (AttributeError, NotImplementedError) as e:
+            # Feature system doesn't support get_feature_names method
             pass
         
         common_features = from_features & to_features

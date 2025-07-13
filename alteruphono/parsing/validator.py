@@ -7,7 +7,26 @@ such as feature compatibility, backreference validity, and context well-formedne
 
 from typing import List, Set, Dict, Tuple
 from .ast_nodes import *
-from .errors import PhonologicalError, SemanticError, ErrorCollector, ParseError
+from ..exceptions import FeatureSystemError, ValidationError, AlteruPhonoError
+
+
+class ErrorCollector:
+    """Simple error collector for validation."""
+    
+    def __init__(self):
+        self.errors: List[AlteruPhonoError] = []
+    
+    def add_error(self, error: AlteruPhonoError):
+        """Add an error to the collection."""
+        self.errors.append(error)
+    
+    def get_errors(self) -> List[AlteruPhonoError]:
+        """Get all collected errors."""
+        return self.errors.copy()
+    
+    def clear(self):
+        """Clear all errors."""
+        self.errors.clear()
 
 
 class PhonologicalValidator(BaseASTVisitor):
@@ -64,7 +83,7 @@ class PhonologicalValidator(BaseASTVisitor):
         self.context_left_length = 0
         self.context_right_length = 0
         
-    def validate(self, rule_node: RuleNode) -> List[ParseError]:
+    def validate(self, rule_node: RuleNode) -> List[AlteruPhonoError]:
         """
         Validate a complete rule and return any errors found.
         
@@ -127,11 +146,15 @@ class PhonologicalValidator(BaseASTVisitor):
                        self.context_right_length)
         
         if node.index < 0 or node.index >= total_length:
-            self.errors.add_error(SemanticError(
+            self.errors.add_error(ValidationError(
                 message=f"Backreference @{node.index + 1} is invalid: only {total_length} segments available",
-                position=node.position,
-                line=node.line,
-                column=node.column,
+                context={
+                    'index': node.index + 1,
+                    'total_segments': total_length,
+                    'position': getattr(node, 'position', None),
+                    'line': getattr(node, 'line', None),
+                    'column': getattr(node, 'column', None)
+                },
                 suggestions=[
                     f"Use @1 through @{total_length} for valid backreferences",
                     "Check that you have enough segments in the ante and context"
@@ -145,11 +168,14 @@ class PhonologicalValidator(BaseASTVisitor):
     def visit_choice(self, node: ChoiceNode) -> None:
         """Validate a choice node."""
         if len(node.alternatives) < 2:
-            self.errors.add_error(SemanticError(
+            self.errors.add_error(ValidationError(
                 message="Choice must have at least 2 alternatives",
-                position=node.position,
-                line=node.line,
-                column=node.column,
+                context={
+                    'alternatives_count': len(node.alternatives),
+                    'position': getattr(node, 'position', None),
+                    'line': getattr(node, 'line', None),
+                    'column': getattr(node, 'column', None)
+                },
                 suggestions=["Use 'a|b' format with at least two options"]
             ))
         
@@ -160,11 +186,14 @@ class PhonologicalValidator(BaseASTVisitor):
     def visit_set(self, node: SetNode) -> None:
         """Validate a set node."""
         if len(node.alternatives) < 2:
-            self.errors.add_error(SemanticError(
+            self.errors.add_error(ValidationError(
                 message="Set must have at least 2 alternatives",
-                position=node.position,
-                line=node.line,
-                column=node.column,
+                context={
+                    'alternatives_count': len(node.alternatives),
+                    'position': getattr(node, 'position', None),
+                    'line': getattr(node, 'line', None),
+                    'column': getattr(node, 'column', None)
+                },
                 suggestions=["Use '{a|b}' format with at least two options"]
             ))
         
@@ -198,11 +227,16 @@ class PhonologicalValidator(BaseASTVisitor):
                     (feature_name, polarity), 
                     (existing_name, existing_polarity)
                 ):
-                    self.errors.add_error(PhonologicalError(
+                    self.errors.add_error(FeatureSystemError(
                         message=f"Contradictory features in {context}: {self._format_feature(existing_name, existing_polarity)} and {self._format_feature(feature_name, polarity)}",
-                        position=feature_node.position,
-                        line=feature_node.line,
-                        column=feature_node.column,
+                        context={
+                            'feature1': self._format_feature(existing_name, existing_polarity),
+                            'feature2': self._format_feature(feature_name, polarity),
+                            'context': context,
+                            'position': getattr(feature_node, 'position', None),
+                            'line': getattr(feature_node, 'line', None),
+                            'column': getattr(feature_node, 'column', None)
+                        },
                         suggestions=[
                             f"Remove one of the contradictory features",
                             f"Use either {self._format_feature(feature_name, '+')} or {self._format_feature(feature_name, '-')}"
@@ -212,11 +246,16 @@ class PhonologicalValidator(BaseASTVisitor):
             # Check feature dependencies (considering implicit features)
             dependency = self.FEATURE_DEPENDENCIES.get(feature_name)
             if dependency and dependency not in [f for f, _ in features.items()] and dependency not in implicit_features:
-                self.errors.add_error(PhonologicalError(
+                self.errors.add_error(FeatureSystemError(
                     message=f"Feature '{feature_name}' in {context} requires '{dependency}' feature",
-                    position=feature_node.position,
-                    line=feature_node.line,
-                    column=feature_node.column,
+                    context={
+                        'feature_name': feature_name,
+                        'required_feature': dependency,
+                        'context': context,
+                        'position': getattr(feature_node, 'position', None),
+                        'line': getattr(feature_node, 'line', None),
+                        'column': getattr(feature_node, 'column', None)
+                    },
                     suggestions=[f"Add '{dependency}' feature or remove '{feature_name}'"]
                 ))
             
@@ -280,11 +319,15 @@ class PhonologicalValidator(BaseASTVisitor):
         # For now, just check that we don't have obvious mismatches
         # More sophisticated checks can be added later
         if len(ante_atoms) == 0 and post_non_backref > 1:
-            self.errors.add_error(SemanticError(
+            self.errors.add_error(ValidationError(
                 message="Cannot insert multiple segments with empty ante",
-                position=rule_node.position,
-                line=rule_node.line,
-                column=rule_node.column,
+                context={
+                    'ante_length': len(ante_atoms),
+                    'post_non_backref_count': post_non_backref,
+                    'position': getattr(rule_node, 'position', None),
+                    'line': getattr(rule_node, 'line', None),
+                    'column': getattr(rule_node, 'column', None)
+                },
                 suggestions=["Use specific contexts for multi-segment insertion"]
             ))
 

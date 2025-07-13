@@ -137,7 +137,8 @@ class EnvironmentalCondition:
             try:
                 required_features = feature_system.parse_feature_specification(f"[{feature_spec}]")
                 return self._sound_matches_features(sound, required_features)
-            except:
+            except (ValueError, KeyError, AttributeError) as e:
+                # Failed to parse feature specification or feature system error
                 return False
         else:
             # Simple grapheme match
@@ -180,7 +181,8 @@ class EnvironmentalCondition:
             try:
                 prohibited_features = feature_system.parse_feature_specification(f"[{feature_spec}]")
                 return self._sound_matches_features(target_sound, prohibited_features)
-            except:
+            except (ValueError, KeyError, AttributeError) as e:
+                # Failed to parse feature specification or feature system error
                 return False
         return False
 

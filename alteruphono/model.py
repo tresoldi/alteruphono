@@ -2,29 +2,46 @@
 Module holding the classes for the manipulation of sound changes.
 """
 
+from abc import ABC, abstractmethod
 from typing import Union
 
+from .exceptions import AlteruPhonoError
 from .phonology import parse_segment, Sound, SoundSegment
 from .phonology.prosody import ProsodicBoundary, BoundaryType
 
 # TODO: all tokens should have a method to return a corresponding segment
 
-class Token:
+class Token(ABC):
+    """
+    Abstract base class for all token types in sound change rules.
+    
+    Tokens represent different elements in sound change rules such as
+    segments, boundaries, back-references, etc.
+    """
+    
     def __init__(self):
         # TODO: applies only to back-ref or should we reuse if possible for set/choice?
         self.index = None
 
+    @abstractmethod
     def __str__(self) -> str:
-        raise ValueError("Not implemented")
+        """Return string representation of the token."""
+        pass
 
-    def __hash__(self):
-        raise ValueError("Not implemented")
+    @abstractmethod
+    def __hash__(self) -> int:
+        """Return hash value for the token."""
+        pass
 
     def __eq__(self, other) -> bool:
-        raise ValueError("Not implemented")
+        """Check equality with another token."""
+        if not isinstance(other, Token):
+            return False
+        return str(self) == str(other) and type(self) == type(other)
 
     def __ne__(self, other) -> bool:
-        raise ValueError("Not implemented")
+        """Check inequality with another token."""
+        return not self.__eq__(other)
 
 
 class BoundaryToken(Token):

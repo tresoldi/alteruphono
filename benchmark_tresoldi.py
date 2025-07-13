@@ -33,8 +33,8 @@ def benchmark_system(system_name: str, n_iterations: int = 1000) -> dict:
             try:
                 sound = Sound(grapheme=sound_char, feature_system=system_name)
                 created_sounds.append(sound)
-            except:
-                pass  # Skip if sound not available
+            except (ValueError, KeyError, NotImplementedError) as e:
+                pass  # Skip if sound not available in this system
     end_time = time.time()
     
     sound_creation_time = (end_time - start_time) / len(created_sounds) * 1000 if created_sounds else 0
@@ -45,7 +45,7 @@ def benchmark_system(system_name: str, n_iterations: int = 1000) -> dict:
         try:
             test_sound = Sound(grapheme=sound_char, feature_system=system_name)
             break
-        except:
+        except (ValueError, KeyError, NotImplementedError) as e:
             continue
     
     feature_access_time = 0
@@ -69,8 +69,8 @@ def benchmark_system(system_name: str, n_iterations: int = 1000) -> dict:
                 test_sound.distance_to(sound2)
             end_time = time.time()
             distance_time = (end_time - start_time) / (n_iterations // 10) * 1000
-        except:
-            pass
+        except (ValueError, KeyError, NotImplementedError, AttributeError) as e:
+            pass  # Distance calculation not supported or failed
     
     # Test 4: Feature system info
     inventory_size = 0
