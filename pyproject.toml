@@ -45,6 +45,8 @@ dev = [
     "flake8",
     "mypy",
     "hypothesis",
+    "jupyter",
+    "nbconvert",
 ]
 docs = [
     "sphinx",
@@ -56,6 +58,9 @@ visualization = [
     "seaborn",
     "plotly",
     "networkx",
+    "pandas",
+    "numpy",
+    "scipy",
 ]
 ml = [
     "numpy",
