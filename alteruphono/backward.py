@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import itertools
-from typing import List, Union, Tuple
 
 from .phonology import SegSequence, Sound, SoundSegment, BoundarySegment, Segment
 
@@ -18,7 +19,7 @@ from .parser import Rule
 
 
 def _backward_translate(
-    sequence: List[Segment], rule: Rule, match_info: List[Union[Segment, bool, int]]
+    sequence: list[Segment], rule: Rule, match_info: list[Segment | bool | int]
 ):  # ->Tuple[List[Segment], List[Segment]]
     # Make a copy of the ANTE as a "recons"tructed sequence; this will later be
     # modified by back-references from the sequence that was matched
@@ -125,7 +126,7 @@ def _carry_backref_modifier(ante_token: Token, post_token: BackRefToken) -> Toke
 
 # TODO: make sure it works with repeated backreferences, such as "V s > @1 z @1",
 # which we *cannot* have mapped only as "V z V"
-def backward(post_seq: SegSequence, rule: Rule) -> List[SegSequence]:
+def backward(post_seq: SegSequence, rule: Rule) -> list[SegSequence]:
     """Apply backward reconstruction to generate possible proto-forms."""
     # Compute the `post_ast`, applying modifiers and skipping nulls
     post_ast = [token for token in rule.post if not isinstance(token, EmptyToken)]
@@ -149,7 +150,7 @@ def backward(post_seq: SegSequence, rule: Rule) -> List[SegSequence]:
     ante_seqs = []
     while True:
         # TODO: implement a better subsetting of sequence, as a normal python Sequence
-        sub_seq: List[Segment] = [
+        sub_seq: list[Segment] = [
             post_seq[i] for i in range(idx, min(len(post_seq), idx + len(post_ast)))
         ]
 

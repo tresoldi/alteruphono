@@ -2,7 +2,7 @@
 Module with functions and values shared across different parts of the library.
 """
 
-from typing import List, Tuple, Union
+from __future__ import annotations
 
 from .phonology import SoundSegment, Sound, Segment
 
@@ -19,8 +19,8 @@ from .exceptions import ValidationError
 # TODO: add type checks for `sequence` and `pattern`, perhaps casting?
 # TODO: accept SeqSequence as `sequence`
 def check_match(
-    sequence: List[Segment], pattern: List[Token]
-) -> Tuple[bool, List[Union[Segment, bool, int]]]:
+    sequence: list[Segment], pattern: list[Token]
+) -> tuple[bool, list[Segment | bool | int]]:
     """
     Check if a sequence matches a given pattern.
 
@@ -41,7 +41,7 @@ def check_match(
             "Sequence cannot be None",
             parameter_name="sequence",
             provided_value=sequence,
-            expected_type="List[Segment]",
+            expected_type="list[Segment]",
             suggestions=["Provide a valid list of phonological segments"],
         )
 
@@ -50,7 +50,7 @@ def check_match(
             "Pattern cannot be None",
             parameter_name="pattern",
             provided_value=pattern,
-            expected_type="List[Token]",
+            expected_type="list[Token]",
             suggestions=["Provide a valid list of tokens representing the pattern"],
         )
 
@@ -59,7 +59,7 @@ def check_match(
             f"Sequence must be a list, got {type(sequence).__name__}",
             parameter_name="sequence",
             provided_value=type(sequence).__name__,
-            expected_type="List[Segment]",
+            expected_type="list[Segment]",
             suggestions=["Convert sequence to a list of segments"],
         )
 
@@ -68,7 +68,7 @@ def check_match(
             f"Pattern must be a list, got {type(pattern).__name__}",
             parameter_name="pattern",
             provided_value=type(pattern).__name__,
-            expected_type="List[Token]",
+            expected_type="list[Token]",
             suggestions=["Convert pattern to a list of tokens"],
         )
 

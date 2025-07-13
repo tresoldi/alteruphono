@@ -16,13 +16,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.10", "3.11", "3.12"]
         exclude:
           # Reduce matrix size by excluding some combinations
           - os: windows-latest
-            python-version: "3.9"
+            python-version: "3.11"
           - os: macos-latest
-            python-version: "3.10"
+            python-version: "3.12"
 
     steps:
     - uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
         pytest --cov=alteruphono --cov-report=xml --cov-report=term-missing
     
     - name: Upload coverage to Codecov
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.10'
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
@@ -68,7 +68,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.9"
+        python-version: "3.10"
     
     - name: Install linting dependencies
       run: |
@@ -94,7 +94,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.9"
+        python-version: "3.10"
     
     - name: Install build dependencies
       run: |

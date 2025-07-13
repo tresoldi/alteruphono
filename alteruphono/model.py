@@ -2,8 +2,9 @@
 Module holding the classes for the manipulation of sound changes.
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Union
 
 from .exceptions import AlteruPhonoError
 from .phonology import parse_segment, Sound, SoundSegment
@@ -11,14 +12,15 @@ from .phonology.prosody import ProsodicBoundary, BoundaryType
 
 # TODO: all tokens should have a method to return a corresponding segment
 
+
 class Token(ABC):
     """
     Abstract base class for all token types in sound change rules.
-    
+
     Tokens represent different elements in sound change rules such as
     segments, boundaries, back-references, etc.
     """
-    
+
     def __init__(self):
         # TODO: applies only to back-ref or should we reuse if possible for set/choice?
         self.index = None
@@ -46,6 +48,7 @@ class Token(ABC):
 
 class BoundaryToken(Token):
     """Token representing word or morpheme boundaries (#)."""
+
     def __init__(self, boundary_type: str = "#"):
         super().__init__()
         self.boundary_type = boundary_type
@@ -62,6 +65,7 @@ class BoundaryToken(Token):
 
 class ProsodicBoundaryToken(Token):
     """Token representing prosodic boundaries (syllable, foot, etc.)."""
+
     def __init__(self, boundary: ProsodicBoundary):
         super().__init__()
         self.boundary = boundary
@@ -184,7 +188,8 @@ class SetToken(Token):
 # TODO: rename `segment` argument
 class SegmentToken(Token):
     """Token representing a phonological segment."""
-    def __init__(self, segment: Union[str, Sound, SoundSegment]):
+
+    def __init__(self, segment: str | Sound | SoundSegment):
         super().__init__()
 
         if isinstance(segment, str):
@@ -216,21 +221,24 @@ class SegmentToken(Token):
         sound = Sound(grapheme) + modifier
         segment = SoundSegment(sound)
         self.segment = segment
-    
+
     def has_suprasegmental_features(self) -> bool:
         """Check if this segment has suprasegmental features."""
         from .phonology.models import is_suprasegmental_feature
-        return any(is_suprasegmental_feature(str(feature)) 
-                  for sound in self.segment.sounds 
-                  for feature in sound.fvalues)
-    
+
+        return any(
+            is_suprasegmental_feature(str(feature))
+            for sound in self.segment.sounds
+            for feature in sound.fvalues
+        )
+
     def get_stress_level(self) -> int:
         """Get stress level of this segment (0=unstressed, 1=primary, 2=secondary)."""
         for sound in self.segment.sounds:
             if sound.has_stress():
                 return sound.get_stress_level()
         return 0
-    
+
     def get_tone_value(self) -> int:
         """Get tone value of this segment (1-5), or 0 if no tone."""
         for sound in self.segment.sounds:
