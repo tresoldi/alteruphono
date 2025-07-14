@@ -12,7 +12,7 @@ import math
 import random
 # import numpy as np  # Optional dependency
 
-from .rules import FeatureChange, SoundChangeRule
+from .rules import FeatureChange, SoundChangeRule, ChangeType
 from ..sound_v2 import Sound
 from ..feature_systems import FeatureValue, FeatureValueType, get_feature_system
 
@@ -108,7 +108,7 @@ class FeatureShift:
     
     def apply_to_sound(self, sound: Sound, strength: float = 1.0) -> Sound:
         """Apply the feature shift to a sound."""
-        current_features = dict(sound.features.features)
+        current_features = {f.feature: f.value for f in sound.features.features}
         modified_features = set()
         
         # Track which features are being modified

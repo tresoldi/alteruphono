@@ -198,7 +198,7 @@ class SoundChangeRule:
     name: str
     source_pattern: Union[str, FeatureBundle]  # What sounds this rule applies to
     target_pattern: Union[str, FeatureBundle, List[FeatureChange]]  # What they become
-    environment: Optional[EnvironmentalCondition] = None
+    environment: Optional[Union[str, EnvironmentalCondition]] = None
     probability: float = 1.0  # Probability of application (0.0-1.0)
     change_strength: float = 1.0  # Strength of gradient changes (0.0-1.0)
     application_mode: ApplicationMode = ApplicationMode.IMMEDIATE
@@ -210,6 +210,36 @@ class SoundChangeRule:
             raise ValueError("Probability must be between 0.0 and 1.0")
         if not 0.0 <= self.change_strength <= 1.0:
             raise ValueError("Change strength must be between 0.0 and 1.0")
+        
+        # Convert string environment to EnvironmentalCondition
+        if isinstance(self.environment, str):
+            self.environment = self._parse_environment_string(self.environment)
+    
+    def _parse_environment_string(self, env_string: str) -> EnvironmentalCondition:
+        """Parse environment string like '# _' or 'V _ V' into EnvironmentalCondition."""
+        if not env_string or env_string.strip() == '':
+            return EnvironmentalCondition()
+        
+        # Split on underscore which represents the target position
+        parts = env_string.split('_')
+        
+        left_context = None
+        right_context = None
+        
+        if len(parts) >= 2:
+            left_part = parts[0].strip()
+            right_part = parts[1].strip()
+            
+            # Convert '#' to word boundary, other patterns as-is
+            if left_part and left_part != '':
+                left_context = left_part
+            if right_part and right_part != '':
+                right_context = right_part
+        
+        return EnvironmentalCondition(
+            left_context=left_context,
+            right_context=right_context
+        )
     
     def applies_to(self, sound: Sound, left_context: List[Sound], 
                    right_context: List[Sound]) -> bool:
