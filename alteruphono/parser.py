@@ -91,6 +91,23 @@ def _shift_backref(token: Token, offset: int) -> Token:
     return token
 
 
+def _count_set_tokens(tokens: list[Token]) -> int:
+    """Count top-level SetToken occurrences in a token list."""
+    return sum(1 for tok in tokens if isinstance(tok, SetToken))
+
+
+def _validate_set_arity(source: str, ante_tokens: list[Token], post_tokens: list[Token]) -> None:
+    """Ensure post does not use more set correspondences than ante."""
+    ante_sets = _count_set_tokens(ante_tokens)
+    post_sets = _count_set_tokens(post_tokens)
+    if post_sets > ante_sets:
+        msg = (
+            f"Set correspondence mismatch in rule {source!r}: "
+            f"post has {post_sets} set token(s), ante has {ante_sets}."
+        )
+        raise ValueError(msg)
+
+
 def parse_rule(source: str) -> Rule:
     """Parse a sound change rule string into a Rule.
 
@@ -119,18 +136,18 @@ def parse_rule(source: str) -> Rule:
 
     ante_seq = [_parse_atom(a) for a in ante_str.split()]
     post_seq = [_parse_atom(a) for a in post_str.split()]
+    _validate_set_arity(source, ante_seq, post_seq)
 
     if context_str is not None:
         ctx_tokens = [_parse_atom(a) for a in context_str.split()]
-        # Find focus position
-        focus_idx = None
-        for i, tok in enumerate(ctx_tokens):
-            if isinstance(tok, FocusToken):
-                focus_idx = i
-                break
-        if focus_idx is None:
-            msg = f"Context missing focus (_) in rule: {source!r}"
+        focus_positions = [i for i, tok in enumerate(ctx_tokens) if isinstance(tok, FocusToken)]
+        if len(focus_positions) != 1:
+            msg = (
+                f"Context must contain exactly one focus (_) in rule: {source!r} "
+                f"(found {len(focus_positions)})."
+            )
             raise ValueError(msg)
+        focus_idx = focus_positions[0]
 
         left_ctx = ctx_tokens[:focus_idx]
         right_ctx = ctx_tokens[focus_idx + 1 :]

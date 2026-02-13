@@ -10,6 +10,7 @@ from alteruphono.modifiers import apply_modifiers
 from alteruphono.types import (
     BackRefToken,
     Boundary,
+    BoundaryToken,
     EmptyToken,
     QuantifiedToken,
     SegmentToken,
@@ -115,7 +116,13 @@ def _translate(
             output.append(token.sound)
 
         elif isinstance(token, SetToken):
-            idx = next(set_idx_iter)
+            idx = next(set_idx_iter, None)
+            if idx is None:
+                msg = "Set correspondence mismatch: post uses more set tokens than ante."
+                raise ValueError(msg)
+            if idx >= len(token.choices):
+                msg = "Set correspondence mismatch: set index out of range in post token."
+                raise ValueError(msg)
             choice = token.choices[idx]
             if isinstance(choice, SegmentToken):
                 output.append(choice.sound)
@@ -143,7 +150,7 @@ def _translate(
             else:
                 output.append(elem)
 
-        elif isinstance(token, type(Boundary())):
+        elif isinstance(token, BoundaryToken):
             output.append(Boundary())
 
     return output

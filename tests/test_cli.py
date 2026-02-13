@@ -97,6 +97,13 @@ class TestCLIValidate:
         data = json.loads(output)
         assert data["valid"] is True
 
+    def test_invalid_set_arity_json(self) -> None:
+        ret, output = _run_cmd(cmd_validate, {"rule": "{p|b} > {f|v} {f|v}"}, json_mode=True)
+        assert ret == 1
+        data = json.loads(output)
+        assert data["valid"] is False
+        assert "Set correspondence mismatch" in data["error"]
+
 
 class TestBuildParser:
     def test_parser_creation(self) -> None:

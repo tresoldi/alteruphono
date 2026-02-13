@@ -26,6 +26,13 @@ class TestForwardBasic:
         result_str = " ".join(str(e) for e in result)
         assert result_str == "# a d j aː #"
 
+    def test_boundary_literal_in_post(self) -> None:
+        rule = parse_rule("p > #")
+        seq = parse_sequence("# a p a #")
+        result = forward(seq, rule)
+        result_str = " ".join(str(e) for e in result)
+        assert result_str == "# a # a #"
+
 
 class TestForwardWithContext:
     def test_context_simple(self) -> None:

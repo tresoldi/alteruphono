@@ -84,6 +84,10 @@ class TestParseRuleContext:
         with pytest.raises(ValueError, match="focus"):
             parse_rule("p > b / V V")
 
+    def test_multiple_focus_raises(self) -> None:
+        with pytest.raises(ValueError, match="exactly one focus"):
+            parse_rule("p > b / _ V _")
+
 
 class TestParseRuleBadInput:
     def test_empty_raises(self) -> None:
@@ -98,6 +102,10 @@ class TestParseRuleBadInput:
         rule = parse_rule("C > @1[+voiced]")
         assert isinstance(rule.post[0], BackRefToken)
         assert rule.post[0].modifier == "+voiced"
+
+    def test_set_arity_mismatch_raises(self) -> None:
+        with pytest.raises(ValueError, match="Set correspondence mismatch"):
+            parse_rule("{p|b} > {f|v} {f|v}")
 
 
 class TestParseSequence:
