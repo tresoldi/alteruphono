@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alteruphono"
+version = "1.0.0rc1"
+description = "Phonological sound change modeling for historical linguistics"
+authors = [
+    {name = "Tiago Tresoldi", email = "tiago.tresoldi@lingfil.uu.se"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.12"
+keywords = [
+    "sound change",
+    "phonology",
+    "historical linguistics",
+    "comparative method",
+    "phonological features",
+    "language evolution",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Text Processing :: Linguistic",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-cov", "hypothesis", "ruff", "mypy"]
+
+[project.urls]
+Homepage = "https://github.com/tresoldi/alteruphono"
+Documentation = "https://github.com/tresoldi/alteruphono#readme"
+Repository = "https://github.com/tresoldi/alteruphono"
+"Bug Tracker" = "https://github.com/tresoldi/alteruphono/issues"
+
+[project.scripts]
+alteruphono = "alteruphono.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["alteruphono*"]
+
+[tool.setuptools.package-data]
+alteruphono = ["../resources/*.tsv"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 99
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM", "TCH"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.coverage.run]
+source = ["alteruphono"]
+omit = ["*/tests/*", "*/test_*"]
