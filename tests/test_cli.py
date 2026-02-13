@@ -2,6 +2,8 @@
 
 import io
 import json
+from collections.abc import Callable
+from typing import Any
 
 from alteruphono.cli import (
     build_parser,
@@ -13,7 +15,11 @@ from alteruphono.cli import (
 )
 
 
-def _run_cmd(cmd_func, args_dict, json_mode=False):  # type: ignore[no-untyped-def]
+def _run_cmd(
+    cmd_func: Callable[..., int],
+    args_dict: dict[str, Any],
+    json_mode: bool = False,
+) -> tuple[int, str]:
     """Helper to run a CLI command and capture output."""
     import argparse
 

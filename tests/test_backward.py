@@ -1,10 +1,12 @@
 """Tests for alteruphono.backward — backward reconstruction."""
 
+from collections.abc import Sequence
+
 from alteruphono.backward import backward
 from alteruphono.parser import parse_rule, parse_sequence
 
 
-def _seq_strs(seqs: list[tuple[object, ...]]) -> list[str]:
+def _seq_strs(seqs: Sequence[tuple[object, ...]]) -> list[str]:
     """Convert list of sequences to list of space-separated strings."""
     return [" ".join(str(e) for e in s) for s in seqs]
 

@@ -124,6 +124,7 @@ class TestParseSequence:
 
     def test_unicode(self) -> None:
         seq = parse_sequence("# ɡ e ɡ #")
+        assert isinstance(seq[1], Sound)
         assert seq[1].grapheme == "ɡ"
 
     def test_long_sequence(self) -> None:
