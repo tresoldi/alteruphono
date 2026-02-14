@@ -1,0 +1,2 @@
+gradio>=5.0.0,<6
+alteruphono @ git+https://github.com/tresoldi/alteruphono.git@8db0679
