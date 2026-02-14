@@ -203,7 +203,7 @@ bilabial stop [p] has features like `consonant`, `voiceless`, `bilabial`,
 `stop`. Feature systems define how graphemes map to feature bundles and how
 feature bundles map back to graphemes.
 
-AlteruPhono ships with three systems that share a 7,357-sound inventory
+AlteruPhono ships with three systems that share a 7,356-sound inventory
 from `sounds.tsv`.
 
 ### 4.2 Using Feature Systems
@@ -255,7 +255,7 @@ strings extracted from the NAME column of `sounds.tsv` (e.g., `consonant`,
 
 **Tresoldi (`tresoldi`)** — A broader feature set preserving the full IPA
 description including all modifiers, secondary articulations, and tonal
-features. Same 7,357-sound inventory, richer feature representation.
+features. Same 7,356-sound inventory, richer feature representation.
 Geometry-based sound distance.
 
 **Distinctive (`distinctive`)** — Maps categorical features to 32 scalar
@@ -948,10 +948,10 @@ AlteruPhono ships with TSV data files in the `resources/` directory:
 
 | File | Records | Columns |
 |------|---------|---------|
-| `sounds.tsv` | 7,357 | GRAPHEME, NAME |
+| `sounds.tsv` | 7,356 | GRAPHEME, NAME |
 | `features.tsv` | 126 | VALUE, FEATURE |
-| `classes.tsv` | 21 | SOUND_CLASS, DESCRIPTION, FEATURES, GRAPHEMES |
-| `sound_changes.tsv` | 802 | ID, RULE, WEIGHT, TEST_ANTE, TEST_POST |
+| `classes.tsv` | 20 | SOUND_CLASS, DESCRIPTION, FEATURES, GRAPHEMES |
+| `sound_changes.tsv` | 801 | ID, RULE, WEIGHT, TEST_ANTE, TEST_POST |
 
 Access programmatically:
 

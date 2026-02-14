@@ -53,8 +53,8 @@ class TestTSVSoundChanges:
 
         total = passed + failed + errors
         pass_rate = passed / total if total else 0
-        # Assert >= 20% pass rate (some rules use unsupported notation)
-        assert pass_rate >= 0.20, (
+        # Regression guard: all TSV rules must match expected outputs.
+        assert pass_rate == 1.0, (
             f"Pass rate too low: {passed}/{total} = {pass_rate:.1%} "
             f"({failed} failed, {errors} errors)"
         )

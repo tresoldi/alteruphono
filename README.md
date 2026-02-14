@@ -172,7 +172,7 @@ protos = alteruphono.backward(seq, rule)
 ## Feature Systems
 
 AlteruPhono ships with three pluggable feature systems backed by a TSV
-inventory of 7,357 sounds and a feature geometry tree based on
+inventory of 7,356 sounds and a feature geometry tree based on
 Clements & Hume (1995).
 
 ```python
@@ -204,7 +204,7 @@ Sound distance uses the feature geometry tree for weighted comparison.
 ### Tresoldi (`tresoldi`)
 
 Broader feature set preserving the full IPA description (all modifiers, secondary
-articulations, tonal features). Same 7,357-sound inventory, richer feature
+articulations, tonal features). Same 7,356-sound inventory, richer feature
 representation. Geometry-based sound distance.
 
 ### Distinctive (`distinctive`)
@@ -395,10 +395,10 @@ The library ships with TSV data files in `resources/`:
 
 | File | Records | Columns |
 |------|---------|---------|
-| `sounds.tsv` | 7,357 | GRAPHEME, NAME |
+| `sounds.tsv` | 7,356 | GRAPHEME, NAME |
 | `features.tsv` | 126 | VALUE, FEATURE |
-| `classes.tsv` | 21 | SOUND_CLASS, DESCRIPTION, FEATURES, GRAPHEMES |
-| `sound_changes.tsv` | 802 | ID, RULE, WEIGHT, TEST_ANTE, TEST_POST |
+| `classes.tsv` | 20 | SOUND_CLASS, DESCRIPTION, FEATURES, GRAPHEMES |
+| `sound_changes.tsv` | 801 | ID, RULE, WEIGHT, TEST_ANTE, TEST_POST |
 
 Access programmatically:
 
@@ -442,7 +442,7 @@ alteruphono/                 # 26 files, ~3,000 LOC
 ├── cli.py                   # argparse CLI
 └── __main__.py              # python -m alteruphono
 
-tests/                       # 18 files, ~1,450 LOC, 216 tests
+tests/                       # 17 files, ~1,450 LOC, 227 tests
 resources/                   # TSV data files
 ```
 
