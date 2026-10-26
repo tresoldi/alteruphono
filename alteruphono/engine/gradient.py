@@ -61,6 +61,7 @@ def _forward_probabilistic(
 
     idx = 0
     output: list[Element] = []
+    left, right = rule.left_len, rule.right_len
 
     if has_quant:
         min_len, max_len = _pattern_length_range(rule.ante)
@@ -71,31 +72,37 @@ def _forward_probabilistic(
                 sub_seq = sequence[idx : idx + window]
                 result = match_pattern(sub_seq, rule.ante, system_name, syllable_map, idx)
                 if result.matched:
+                    # Right context is only looked at, not consumed.
+                    span = max(result.span - right, 1)
                     if rng.random() < strength:
                         translated = _translate(sub_seq, rule.ante, rule.post, result, system_name)
-                        output.extend(translated)
+                        output.extend(translated[: len(translated) - right])
                     else:
-                        output.extend(sub_seq)
-                    idx += result.span
+                        output.extend(sub_seq[:span])
+                    idx += span
                     matched = True
                     break
             if not matched:
                 output.append(sequence[idx])
                 idx += 1
     else:
+        # Simultaneous application: contexts are matched against the input.
         len_rule = len(rule.ante)
+        focus_len = len_rule - left - right
         while idx < len_seq:
-            end = min(len_seq, idx + len_rule)
-            sub_seq = sequence[idx:end]
-            if len(sub_seq) == len_rule:
-                result = match_pattern(sub_seq, rule.ante, system_name, syllable_map, idx)
+            start = idx - left
+            if start >= 0 and start + len_rule <= len_seq:
+                sub_seq = sequence[start : start + len_rule]
+                result = match_pattern(sub_seq, rule.ante, system_name, syllable_map, start)
                 if result.matched:
                     if rng.random() < strength:
                         translated = _translate(sub_seq, rule.ante, rule.post, result, system_name)
-                        output.extend(translated)
+                        output.extend(translated[left : len(translated) - right])
+                        if focus_len == 0:
+                            output.append(sequence[idx])
                     else:
-                        output.extend(sub_seq)
-                    idx += len_rule
+                        output.extend(sequence[idx : idx + max(focus_len, 1)])
+                    idx += max(focus_len, 1)
                     continue
             output.append(sequence[idx])
             idx += 1

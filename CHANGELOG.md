@@ -2,6 +2,16 @@
 
 All notable changes to AlteruPhono will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+- Rule contexts are no longer consumed during matching: `forward()` and the
+  probabilistic path of `apply_gradient()` now apply rules simultaneously
+  (SPE-style), matching both contexts against the input. Previously
+  `p > b / V _ V` turned `a p a p a` into `a b a p a`, and `t > :null: / t _`
+  turned `a t t t a` into `a t t a`. `Rule` gains `left_len`/`right_len`
+  (defaults 0, so hand-built rules are unaffected).
+
 ## [1.0.0rc1] - 2025-02-13
 
 ### Changed
