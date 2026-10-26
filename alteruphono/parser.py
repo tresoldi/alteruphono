@@ -171,7 +171,13 @@ def parse_rule(source: str) -> Rule:
             BackRefToken(index=i + offset_left + offset_ante) for i in range(len(right_ctx))
         ]
 
-        return Rule(source=source, ante=tuple(merged_ante), post=tuple(merged_post))
+        return Rule(
+            source=source,
+            ante=tuple(merged_ante),
+            post=tuple(merged_post),
+            left_len=offset_left,
+            right_len=len(right_ctx),
+        )
 
     return Rule(source=source, ante=tuple(ante_seq), post=tuple(post_seq))
 

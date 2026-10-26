@@ -160,6 +160,11 @@ class Rule:
     source: str
     ante: tuple[Token, ...]
     post: tuple[Token, ...]
+    # Number of leading/trailing ante tokens that are context, not focus.
+    # Contexts are matched against the input but never consumed, so rules
+    # apply simultaneously (SPE-style), e.g. p > b / V _ V on "a p a p a".
+    left_len: int = 0
+    right_len: int = 0
 
     def __str__(self) -> str:
         return self.source

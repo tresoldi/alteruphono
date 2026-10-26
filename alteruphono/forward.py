@@ -179,6 +179,7 @@ def forward(
 
     idx = 0
     output: list[Element] = []
+    left, right = rule.left_len, rule.right_len
 
     if has_quantifiers:
         min_len, max_len = _pattern_length_range(rule.ante)
@@ -192,8 +193,9 @@ def forward(
                 result = match_pattern(sub_seq, rule.ante, system_name, syllable_map, idx)
                 if result.matched:
                     translated = _translate(sub_seq, rule.ante, rule.post, result, system_name)
-                    output.extend(translated)
-                    idx += result.span
+                    # Right context is only looked at, not consumed.
+                    output.extend(translated[: len(translated) - right])
+                    idx += max(result.span - right, 1)
                     matched = True
                     break
 
@@ -201,17 +203,23 @@ def forward(
                 output.append(sequence[idx])
                 idx += 1
     else:
+        # Simultaneous application: the focus starts at idx and both
+        # contexts are matched against the *input* sequence.
         len_rule = len(rule.ante)
+        focus_len = len_rule - left - right
         while idx < len_seq:
-            end = min(len_seq, idx + len_rule)
-            sub_seq = sequence[idx:end]
-
-            if len(sub_seq) == len_rule:
-                result = match_pattern(sub_seq, rule.ante, system_name, syllable_map, idx)
+            start = idx - left
+            if start >= 0 and start + len_rule <= len_seq:
+                sub_seq = sequence[start : start + len_rule]
+                result = match_pattern(sub_seq, rule.ante, system_name, syllable_map, start)
                 if result.matched:
                     translated = _translate(sub_seq, rule.ante, rule.post, result, system_name)
-                    output.extend(translated)
-                    idx += len_rule
+                    output.extend(translated[left : len(translated) - right])
+                    if focus_len > 0:
+                        idx += focus_len
+                    else:  # pure insertion: keep the current element too
+                        output.append(sequence[idx])
+                        idx += 1
                     continue
 
             output.append(sequence[idx])
