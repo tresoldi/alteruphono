@@ -50,8 +50,8 @@ def _backward_translate(
     rule: Rule,
     result: MatchResult,
     system_name: str | None,
-) -> list[Element]:
-    """Produce a reconstructed (proto) subsequence from a matched daughter."""
+) -> list[list[Element]]:
+    """Produce the reconstructed (proto) subsequences for a matched daughter window."""
     sys = get_system(system_name)
 
     # Start from ante as template for reconstruction
@@ -100,23 +100,17 @@ def _backward_translate(
                     if isinstance(choice, SegmentToken):
                         recons[idx] = choice.sound
 
-    # Filter out any remaining non-Element entries (choices that weren't resolved)
-    result_elems: list[Element] = []
+    # A choice or set the post does not resolve stands for every one of its
+    # alternatives: `x|h > :null: / a _ k` restores x or h. Taking the first
+    # alternative only, as this used to, silently dropped the rest.
+    options: list[list[Element]] = []
     for item in recons:
         if isinstance(item, (Sound, Boundary)):
-            result_elems.append(item)
-        elif isinstance(item, ChoiceToken):
-            # Take first choice as fallback
-            if item.choices and isinstance(item.choices[0], SegmentToken):
-                result_elems.append(item.choices[0].sound)
-        elif (
-            isinstance(item, SetToken)
-            and item.choices
-            and isinstance(item.choices[0], SegmentToken)
-        ):
-            result_elems.append(item.choices[0].sound)
-
-    return result_elems
+            options.append([item])
+        elif isinstance(item, (ChoiceToken, SetToken)):
+            sounds = [c.sound for c in item.choices if isinstance(c, SegmentToken)]
+            options.append(sounds or [Boundary()])
+    return [list(combo) for combo in itertools.product(*options)]
 
 
 def backward(
@@ -154,7 +148,7 @@ def backward(
             if result.matched:
                 # Two alternatives: the backward-translated and the original
                 translated = _backward_translate(sub_seq, rule, result, system_name)
-                alternatives.append([list(sub_seq), translated])
+                alternatives.append([list(sub_seq), *translated])
                 idx += len_post
                 continue
 

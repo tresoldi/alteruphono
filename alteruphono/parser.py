@@ -108,6 +108,23 @@ def _validate_set_arity(source: str, ante_tokens: list[Token], post_tokens: list
         raise ValueError(msg)
 
 
+def _validate_no_choice_output(source: str, post_tokens: list[Token]) -> None:
+    """A choice in the output names no single result.
+
+    `p|t|k > b|d|g` used to parse and then delete every match: forward has no
+    way to pick an alternative, and it dropped the token. A correspondence by
+    position is a set, `{p|t|k} > {b|d|g}`.
+    """
+    from alteruphono.types import ChoiceToken
+
+    if any(isinstance(tok, ChoiceToken) for tok in post_tokens):
+        msg = (
+            f"Choice in the output of rule {source!r}: an output must be one "
+            "segment; for a positional correspondence use sets, e.g. {p|t|k} > {b|d|g}."
+        )
+        raise ValueError(msg)
+
+
 def parse_rule(source: str) -> Rule:
     """Parse a sound change rule string into a Rule.
 
@@ -137,6 +154,7 @@ def parse_rule(source: str) -> Rule:
     ante_seq = [_parse_atom(a) for a in ante_str.split()]
     post_seq = [_parse_atom(a) for a in post_str.split()]
     _validate_set_arity(source, ante_seq, post_seq)
+    _validate_no_choice_output(source, post_seq)
 
     if context_str is not None:
         ctx_tokens = [_parse_atom(a) for a in context_str.split()]
