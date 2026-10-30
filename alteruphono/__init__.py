@@ -6,6 +6,7 @@ __version__ = "1.0.0rc1"
 
 from alteruphono.backward import backward
 from alteruphono.forward import forward
+from alteruphono.history import BackwardResult, Reconstruction, Restoration, backward_history
 from alteruphono.match import match_pattern
 from alteruphono.parser import parse_rule, parse_sequence
 from alteruphono.types import (
@@ -50,4 +51,8 @@ __all__ = [
     "match_pattern",
     "forward",
     "backward",
+    "backward_history",
+    "BackwardResult",
+    "Reconstruction",
+    "Restoration",
 ]

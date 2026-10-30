@@ -4,7 +4,26 @@ All notable changes to AlteruPhono will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- `backward_history(daughter, rules)`: backward through an ordered history.
+  Every candidate is forward-verified, so each one derives the daughter. Each
+  carries its provenance: which rule restored what, and where.
+  - A context-free deletion is reversed only where an earlier rule needs the
+    lost segment (trace-licensed). Opaque orders are recovered through the
+    order itself.
+  - Restored sound classes come back as merkmal `AbstractSegment`s. merkmal
+    is now a dependency, imported only by this function.
+- `engine.ordering.rival_orders(a, b, pairs)`: scores an ordering claim against
+  the reverse order, simultaneous application, a fused change (extensionally
+  identical, so noted rather than scored) and analogy (needs paradigms).
+
 ### Fixed
+- `backward` restored only the first alternative of a deleted choice:
+  `x|h > :null: / a _ k` gave back *x* but never *h*. It now restores every
+  alternative.
+- A choice in a rule's output (`p|t|k > b|d|g`) used to parse and then delete
+  every match in `forward`. It is now a `ValueError` pointing to set syntax,
+  `{p|t|k} > {b|d|g}`. None of the bundled catalogue rules uses it.
 - Rule contexts are no longer consumed during matching: `forward()` and the
   probabilistic path of `apply_gradient()` now apply rules simultaneously
   (SPE-style), matching both contexts against the input. Previously

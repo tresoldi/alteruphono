@@ -10,7 +10,9 @@ from alteruphono.forward import forward
 from alteruphono.parser import parse_rule, parse_sequence
 
 if TYPE_CHECKING:
-    from alteruphono.types import Rule, Sequence
+    from collections.abc import Callable
+
+    from alteruphono.types import Element, Rule, Sequence
 
 
 class Interaction(Enum):
@@ -296,3 +298,122 @@ def recommend_ordering(
             recommendations.append(f"Suggested order: {order_str}")
 
     return recommendations
+
+
+@dataclass(frozen=True)
+class RivalScore:
+    """How one rival account of two rules fares on (proto, daughter) data."""
+
+    rival: str
+    derived: int
+    total: int
+    failures: tuple[tuple[str, str, str], ...]  # (proto, expected, got), first few
+    note: str = ""
+
+
+def _forward_simultaneous(
+    rules: list[Rule], seq: Sequence, system_name: str | None
+) -> Sequence | None:
+    """Both rules applied to the same input, neither seeing the other's output.
+
+    At each position the first rule whose pattern matches the *input* there
+    rewrites it. Returns None where this is not defined: a rule with
+    quantifiers, or two rules rewriting the same position differently.
+    """
+    from alteruphono.forward import _translate
+    from alteruphono.match import _has_quantifiers, match_pattern
+
+    if any(_has_quantifiers(r.ante) for r in rules):
+        return None
+    out: list[Element] = []
+    idx = 0
+    while idx < len(seq):
+        hits: list[tuple[int, tuple[Element, ...]]] = []
+        for rule in rules:
+            left, right = rule.left_len, rule.right_len
+            start = idx - left
+            n = len(rule.ante)
+            if start < 0 or start + n > len(seq):
+                continue
+            window = seq[start : start + n]
+            result = match_pattern(window, rule.ante, system_name)
+            if result.matched:
+                out_window = _translate(window, rule.ante, rule.post, result, system_name)
+                hits.append((n - left - right, tuple(out_window[left : len(out_window) - right])))
+        if not hits:
+            out.append(seq[idx])
+            idx += 1
+            continue
+        if len({h for h in hits}) > 1:
+            return None
+        focus, rewritten = hits[0]
+        out.extend(rewritten)
+        if focus > 0:
+            idx += focus
+        else:
+            out.append(seq[idx])
+            idx += 1
+    return tuple(out)
+
+
+def rival_orders(
+    rule_a: str | Rule,
+    rule_b: str | Rule,
+    pairs: list[tuple[str, str]],
+    system_name: str | None = None,
+    max_failures: int = 5,
+) -> list[RivalScore]:
+    """Score the rivals an ordering claim "A before B" must beat.
+
+    `pairs` are (proto, daughter) sequences. Rivals:
+
+    * ``a_then_b``: the claim itself;
+    * ``b_then_a``: the reverse order;
+    * ``simultaneous``: both rules on the same input (undefined for rules with
+      quantifiers, or where both rewrite one position differently; those pairs
+      count as not derived and are noted);
+    * ``fused``: one change doing what A then B does. It derives exactly what
+      ``a_then_b`` derives, so data cannot separate them; the note says so, and
+      the choice falls to whether the intermediate stage has independent
+      support (the constitution's ``compressed_path``);
+    * ``analogy``: not evaluable without a paradigm substrate; reported as such.
+    """
+    a = parse_rule(rule_a) if isinstance(rule_a, str) else rule_a
+    b = parse_rule(rule_b) if isinstance(rule_b, str) else rule_b
+    parsed = [(parse_sequence(p), _seq_str(parse_sequence(d))) for p, d in pairs]
+
+    def score(
+        name: str, derive: Callable[[Sequence], Sequence | None], note: str = ""
+    ) -> RivalScore:
+        derived = 0
+        failures: list[tuple[str, str, str]] = []
+        undefined = 0
+        for proto, expected in parsed:
+            got = derive(proto)
+            if got is None:
+                undefined += 1
+                got_text = "(undefined)"
+            else:
+                got_text = _seq_str(got)
+            if got_text == expected:
+                derived += 1
+            elif len(failures) < max_failures:
+                failures.append((_seq_str(proto), expected, got_text))
+        if undefined:
+            note = (note + "; " if note else "") + f"undefined on {undefined} pair(s)"
+        return RivalScore(name, derived, len(parsed), tuple(failures), note)
+
+    ab = score("a_then_b", lambda s: _apply(b, _apply(a, s, system_name), system_name))
+    return [
+        ab,
+        score("b_then_a", lambda s: _apply(a, _apply(b, s, system_name), system_name)),
+        score("simultaneous", lambda s: _forward_simultaneous([a, b], s, system_name)),
+        RivalScore(
+            "fused",
+            ab.derived,
+            ab.total,
+            ab.failures,
+            "extensionally identical to a_then_b: data cannot separate them",
+        ),
+        RivalScore("analogy", 0, len(parsed), (), "not evaluable without a paradigm substrate"),
+    ]

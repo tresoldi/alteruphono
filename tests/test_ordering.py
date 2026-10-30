@@ -73,3 +73,29 @@ class TestRecommendations:
         )
         recs = recommend_ordering(results)
         assert any("Suggested order" in r for r in recs)
+
+
+class TestRivalOrders:
+    def _scores(self, a: str, b: str, pairs: list[tuple[str, str]]) -> dict[str, object]:
+        from alteruphono.engine.ordering import rival_orders
+
+        return {r.rival: r for r in rival_orders(a, b, pairs)}
+
+    def test_counterbleeding_beats_reverse_but_ties_simultaneous(self) -> None:
+        pairs = [("# a k i #", "# a tʃ #"), ("# k i t a #", "# tʃ i t a #")]
+        s = self._scores("k > tʃ / _ i", "i > :null: / _ #", pairs)
+        assert s["a_then_b"].derived == 2
+        assert s["b_then_a"].derived == 1
+        # An opaque order is often indistinguishable from simultaneous application.
+        assert s["simultaneous"].derived == 2
+
+    def test_fused_and_analogy_are_reported_not_hidden(self) -> None:
+        s = self._scores("p > b / V _ V", "t > p / V _ V", [("# a t a #", "# a p a #")])
+        assert s["fused"].derived == s["a_then_b"].derived
+        assert "cannot separate" in s["fused"].note
+        assert "paradigm" in s["analogy"].note
+
+    def test_conflicting_simultaneous_rewrite_is_undefined(self) -> None:
+        s = self._scores("a > e", "a > o", [("# a #", "# e #")])
+        assert s["simultaneous"].derived == 0
+        assert "undefined" in s["simultaneous"].note

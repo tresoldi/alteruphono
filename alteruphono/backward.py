@@ -108,7 +108,7 @@ def _backward_translate(
         if isinstance(item, (Sound, Boundary)):
             options.append([item])
         elif isinstance(item, (ChoiceToken, SetToken)):
-            sounds = [c.sound for c in item.choices if isinstance(c, SegmentToken)]
+            sounds: list[Element] = [c.sound for c in item.choices if isinstance(c, SegmentToken)]
             options.append(sounds or [Boundary()])
     return [list(combo) for combo in itertools.product(*options)]
 

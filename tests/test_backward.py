@@ -58,7 +58,9 @@ class TestBackwardMultiple:
 class TestBackwardAlternatives:
     def test_deleted_choice_restores_every_alternative(self) -> None:
         # Restoring only the first alternative silently dropped h.
-        results = _seq_strs(backward(parse_sequence("# a k a #"), parse_rule("x|h > :null: / a _ k")))
+        results = _seq_strs(
+            backward(parse_sequence("# a k a #"), parse_rule("x|h > :null: / a _ k"))
+        )
         assert "# a x k a #" in results
         assert "# a h k a #" in results
         assert "# a k a #" in results

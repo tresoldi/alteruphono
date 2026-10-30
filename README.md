@@ -164,10 +164,39 @@ result = alteruphono.match_pattern(seq, rule.ante)
 # Forward application (simulation)
 output = alteruphono.forward(seq, rule)
 
-# Backward reconstruction
+# Backward reconstruction, one rule (candidates are not verified)
 protos = alteruphono.backward(seq, rule)
 # → list of possible proto-form tuples
+
+# Backward through an ordered history (every candidate derives the daughter)
+result = alteruphono.backward_history(
+    alteruphono.parse_sequence("# a k #"),
+    ["e > a / H _", "H > :null:"],   # colouring, then loss of H
+)
+[str(c) for c in result.candidates]
+# → ['# a k #', '# H e k #']
 ```
+
+`backward_history` undoes the rules from last to first and keeps a candidate
+only if the rule, applied forward, gives back the later form. It handles two
+cases a single-rule inverse cannot:
+
+- **A context-free deletion** (`H > :null:`) is reversed only where an earlier
+  rule needs the segment. In the example, H is restored before the *a*
+  because undoing `e > a / H _` uses it. No trace, no insertion.
+- **An opaque order** is recovered through the order itself. For example,
+  with palatalisation and then loss of final *i*, *a tʃ* yields *a k i*.
+
+Each candidate records its `steps`: which rule restored what, and where. A
+restored sound class (`H`, `C`) is reported in `latents` as a merkmal
+`AbstractSegment`, never as a grapheme. The search keeps at most
+`max_candidates` states per rule, and `truncated` says whether it dropped any.
+
+For an ordering claim, `alteruphono.engine.ordering.rival_orders(a, b, pairs)`
+scores the rivals on (proto, daughter) data: the claimed order, the reverse,
+simultaneous application, a fused single change and analogy. A fused change
+derives exactly what the claimed order derives, and analogy needs paradigms,
+so both are reported as such rather than scored away.
 
 ## Feature Systems
 
