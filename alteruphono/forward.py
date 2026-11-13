@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from alteruphono import _core, _native
 from alteruphono.features import get_system, normalize_output
 from alteruphono.match import _has_quantifiers, build_syllable_map, match_pattern
 from alteruphono.modifiers import apply_modifiers
@@ -163,66 +164,13 @@ def forward(
 ) -> Sequence:
     """Apply a sound change rule forward to a sequence.
 
-    Supports both fixed-length and variable-length (quantified) patterns.
+    Runs in the C engine. Rules apply simultaneously (SPE): contexts are
+    matched against the input and never consumed, for fixed-length and
+    quantified rules alike. The helpers above are 1.x's Python matcher, kept
+    for engine.gradient's probabilistic application.
     """
-    len_seq = len(sequence)
-
-    if len(rule.ante) == 0 or len_seq == 0:
+    if system_name is not None:
+        get_system(system_name)  # an unknown system is an error, as in 1.x
+    if len(rule.ante) == 0 or len(sequence) == 0:
         return sequence
-
-    has_quantifiers = _has_quantifiers(rule.ante)
-
-    # Build syllable map if needed
-    syllable_map: dict[int, str] | None = None
-    if _needs_syllable_map(rule.ante):
-        syllable_map = build_syllable_map(sequence, system_name)
-
-    idx = 0
-    output: list[Element] = []
-    left, right = rule.left_len, rule.right_len
-
-    if has_quantifiers:
-        min_len, max_len = _pattern_length_range(rule.ante)
-
-        while idx < len_seq:
-            matched = False
-            # Try from largest to smallest window (greedy)
-            window_max = min(max_len, len_seq - idx)
-            for window in range(window_max, min_len - 1, -1):
-                sub_seq = sequence[idx : idx + window]
-                result = match_pattern(sub_seq, rule.ante, system_name, syllable_map, idx)
-                if result.matched:
-                    translated = _translate(sub_seq, rule.ante, rule.post, result, system_name)
-                    # Right context is only looked at, not consumed.
-                    output.extend(translated[: len(translated) - right])
-                    idx += max(result.span - right, 1)
-                    matched = True
-                    break
-
-            if not matched:
-                output.append(sequence[idx])
-                idx += 1
-    else:
-        # Simultaneous application: the focus starts at idx and both
-        # contexts are matched against the *input* sequence.
-        len_rule = len(rule.ante)
-        focus_len = len_rule - left - right
-        while idx < len_seq:
-            start = idx - left
-            if start >= 0 and start + len_rule <= len_seq:
-                sub_seq = sequence[start : start + len_rule]
-                result = match_pattern(sub_seq, rule.ante, system_name, syllable_map, start)
-                if result.matched:
-                    translated = _translate(sub_seq, rule.ante, rule.post, result, system_name)
-                    output.extend(translated[left : len(translated) - right])
-                    if focus_len > 0:
-                        idx += focus_len
-                    else:  # pure insertion: keep the current element too
-                        output.append(sequence[idx])
-                        idx += 1
-                    continue
-
-            output.append(sequence[idx])
-            idx += 1
-
-    return tuple(output)
+    return _core.forward(sequence, rule)

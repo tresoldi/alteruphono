@@ -57,7 +57,20 @@ int main(void)
 
     /* interning: same grapheme, same id */
     CHECK(ap_intern(ctx, "p", &p2) == AP_OK && p2 == p);
-    CHECK(ap_intern(ctx, "#", &p2) == AP_OK && p2 == AP_SEG_BOUNDARY);
+    CHECK(ap_intern(ctx, "#", &p2) == AP_OK && p2 != AP_SEG_BOUNDARY); /* 1.x: Sound("#") */
+    {
+        const char *const lab[] = { "voiced", "x-new-label" };
+        ap_seg h;
+        int f = -1;
+        CHECK(ap_intern_labels(ctx, "q", lab, 2, 0, &h) == AP_OK);
+        CHECK(has_label(ctx, h, "x-new-label") == 1);
+        CHECK(ap_class_features(ctx, "R", &labels, &n, &f) == AP_OK && f == 1 && n == 2);
+        if (n == 2) {
+            CHECK(strcmp(labels[0], "-stop") == 0 && strcmp(labels[1], "consonant") == 0);
+        }
+        ap_strings_free(labels, n);
+        CHECK(ap_class_features(ctx, "p", &labels, &n, &f) == AP_OK && f == 0);
+    }
 
     /* a class is a partial segment with the class's features */
     CHECK(ap_intern(ctx, "V", &v) == AP_OK);

@@ -1014,23 +1014,35 @@ ap_status ap_context_clone(const ap_context *src, ap_context **out)
 
 ap_status ap_intern(ap_context *ctx, const char *grapheme, ap_seg *out)
 {
-    char *pre = NULL;
-    ap_status st;
-
     if (ctx == NULL || grapheme == NULL || out == NULL) {
         return AP_ERR_INVALID_ARGUMENT;
     }
-    if (strcmp(grapheme, "#") == 0) {
-        *out = AP_SEG_BOUNDARY;
-        return AP_OK;
+    return api_make_sound(ctx, grapheme, out);
+}
+
+ap_status ap_intern_labels(
+    ap_context *ctx, const char *grapheme, const char *const *labels, size_t count, int partial, ap_seg *out)
+{
+    ap_labels l;
+    size_t i;
+
+    if (ctx == NULL || grapheme == NULL || out == NULL || (labels == NULL && count > 0)) {
+        return AP_ERR_INVALID_ARGUMENT;
     }
-    st = api_preprocess(grapheme, &pre);
-    if (st != AP_OK) {
-        return st;
+    memset(&l, 0, sizeof(l));
+    for (i = 0; i < count; i++) {
+        uint32_t id;
+        ap_status st;
+        if (labels[i] == NULL) {
+            return AP_ERR_INVALID_ARGUMENT;
+        }
+        st = api_context_label(ctx, labels[i], &id);
+        if (st != AP_OK) {
+            return st;
+        }
+        api_labels_set(&l, id);
     }
-    st = api_make_sound(ctx, pre, out);
-    free(pre);
-    return st;
+    return api_intern_seg(ctx, grapheme, &l, partial != 0, out);
 }
 
 ap_status ap_seg_grapheme(const ap_context *ctx, ap_seg seg, const char **out)
@@ -1089,6 +1101,22 @@ ap_status ap_seg_labels(const ap_context *ctx, ap_seg seg, char ***labels, size_
         return AP_ERR_INVALID_ARGUMENT;
     }
     return labels_to_strings(ctx, &ctx->segs[seg].labels, labels, count);
+}
+
+ap_status ap_class_features(const ap_context *ctx, const char *name, char ***labels, size_t *count, int *found)
+{
+    uint32_t cls;
+
+    if (ctx == NULL || name == NULL || labels == NULL || count == NULL || found == NULL) {
+        return AP_ERR_INVALID_ARGUMENT;
+    }
+    *labels = NULL;
+    *count = 0;
+    *found = api_strmap_get(&ctx->class_index, name, &cls);
+    if (!*found) {
+        return AP_OK;
+    }
+    return labels_to_strings(ctx, &ctx->classes[cls].labels, labels, count);
 }
 
 ap_status ap_grapheme_features(ap_context *ctx, const char *grapheme, char ***labels, size_t *count, int *found)

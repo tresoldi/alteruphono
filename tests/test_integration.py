@@ -82,4 +82,4 @@ class TestEndToEnd:
         assert hasattr(alteruphono, "Sound")
         assert hasattr(alteruphono, "Boundary")
         assert hasattr(alteruphono, "__version__")
-        assert alteruphono.__version__ == "1.0.0rc1"
+        assert alteruphono.__version__ == "2.0.0.dev0"

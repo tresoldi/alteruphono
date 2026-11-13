@@ -112,8 +112,20 @@ AP_API ap_status ap_context_new(
 AP_API ap_status ap_context_clone(const ap_context *context, ap_context **out);
 AP_API void ap_context_free(ap_context *context);
 
-/* Segments. */
+/* Segments. ap_intern is 1.x's features.sound(): the grapheme exactly as
+ * given (no normalization), a sound class if it names one, else its features
+ * from the projection, else a featureless segment. "#" is a segment here, not
+ * the boundary (AP_SEG_BOUNDARY), as in 1.x. */
 AP_API ap_status ap_intern(ap_context *context, const char *grapheme, ap_seg *out);
+/* A segment with exactly these labels (1.x's Sound(grapheme, features, partial)).
+ * Labels the context does not know are added to it (AP_ERR_LIMIT past 256). */
+AP_API ap_status ap_intern_labels(
+    ap_context *context, const char *grapheme, const char *const *labels, size_t count,
+    int partial, ap_seg *out);
+/* The features of a sound class of the context's class pack, as 1.x stores
+ * them ("-x" names included). *found is 0 for a name that is not a class. */
+AP_API ap_status ap_class_features(
+    const ap_context *context, const char *name, char ***labels, size_t *count, int *found);
 AP_API ap_status ap_seg_grapheme(const ap_context *context, ap_seg seg, const char **out);
 AP_API ap_status ap_seg_is_partial(const ap_context *context, ap_seg seg, int *out);
 /* Labels of a segment, sorted by code point. Free with ap_strings_free. */

@@ -5,9 +5,9 @@ It carries, from alteruphono 1.x, only what is not a feature table:
   and the tone values), which fix the names and the replacement rule of
   feature modifiers;
 - the sound-class pack (`resources/classes.tsv`, FEATURES column only);
-- the grapheme universe (`resources/sounds.tsv`, GRAPHEME column only, in file
-  order), which 1.x uses as its lookup keys and to render feature sets back
-  to graphemes (first match wins).
+- the grapheme universe (`resources/graphemes_1x.txt`: the GRAPHEME column of
+  1.x's sounds.tsv, in file order), which 1.x uses as its lookup keys and to
+  render feature sets back to graphemes (first match wins).
 
 Feature values come from merkmal at run time, never from these files.
 
@@ -24,10 +24,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from alteruphono.features.ipa import FEATURE_ALIASES, FEATURE_CATEGORIES, _TONE_VALUES  # noqa: E402
+import importlib.util  # noqa: E402
+
+_spec = importlib.util.spec_from_file_location(
+    "vocabulary", ROOT / "alteruphono" / "features" / "vocabulary.py"
+)
+_vocab = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_vocab)
+FEATURE_ALIASES, FEATURE_CATEGORIES, _TONE_VALUES = (
+    _vocab.FEATURE_ALIASES, _vocab.FEATURE_CATEGORIES, _vocab._TONE_VALUES
+)
 
 OUT = ROOT / "src" / "generated" / "compat1x.c"
-DROPPED_CLASSES = {"XXX"}  # 1.x's "development" entry
+DROPPED_CLASSES: set[str] = set()
 
 
 def c_string(s: str) -> str:
@@ -41,8 +50,7 @@ def c_string(s: str) -> str:
 
 
 def main() -> None:
-    with (ROOT / "resources" / "sounds.tsv").open(encoding="utf-8") as f:
-        graphemes = [row["GRAPHEME"] for row in csv.DictReader(f, delimiter="\t")]
+    graphemes = (ROOT / "resources" / "graphemes_1x.txt").read_text(encoding="utf-8").splitlines()
     with (ROOT / "resources" / "classes.tsv").open(encoding="utf-8") as f:
         classes = [
             (row["SOUND_CLASS"], row["FEATURES"])

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__version__ = "1.0.0rc1"
+__version__ = "2.0.0.dev0"
 
 from alteruphono.backward import backward
 from alteruphono.forward import forward

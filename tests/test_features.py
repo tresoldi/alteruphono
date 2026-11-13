@@ -3,30 +3,18 @@
 import pytest
 
 from alteruphono.features import get_system, list_systems, set_default, sound
-from alteruphono.features.distinctive import DistinctiveFeatureSystem
 from alteruphono.features.ipa import IPAFeatureSystem
-from alteruphono.features.tresoldi import TresoldiFeatureSystem
 from alteruphono.types import Sound
 
 
 class TestRegistry:
     def test_list_systems(self) -> None:
         systems = list_systems()
-        assert "ipa" in systems
-        assert "tresoldi" in systems
-        assert "distinctive" in systems
+        assert systems == ["ipa"]  # 2.0: 1.x's tresoldi and distinctive tables are gone
 
     def test_get_ipa(self) -> None:
         sys = get_system("ipa")
         assert sys.name == "ipa"
-
-    def test_get_tresoldi(self) -> None:
-        sys = get_system("tresoldi")
-        assert sys.name == "tresoldi"
-
-    def test_get_distinctive(self) -> None:
-        sys = get_system("distinctive")
-        assert sys.name == "distinctive"
 
     def test_get_default(self) -> None:
         sys = get_system()
@@ -37,9 +25,7 @@ class TestRegistry:
             get_system("nonexistent")
 
     def test_set_default(self) -> None:
-        set_default("tresoldi")
-        assert get_system().name == "tresoldi"
-        set_default("ipa")  # Reset
+        set_default("ipa")
         assert get_system().name == "ipa"
 
     def test_set_default_unknown(self) -> None:
@@ -128,45 +114,5 @@ class TestIPAFeatureSystem:
         assert "voiceless" not in result  # Replaced in same category
 
 
-class TestTresoldiFeatureSystem:
-    def setup_method(self) -> None:
-        self.sys = TresoldiFeatureSystem()
-
-    def test_name(self) -> None:
-        assert self.sys.name == "tresoldi"
-
-    def test_grapheme_a(self) -> None:
-        feats = self.sys.grapheme_to_features("a")
-        assert feats is not None
-        assert "vowel" in feats
-
-    def test_is_class(self) -> None:
-        assert self.sys.is_class("V") is True
-        assert self.sys.is_class("a") is False
-
-    def test_partial_match(self) -> None:
-        vowel_feats = frozenset({"vowel"})
-        a_feats = self.sys.grapheme_to_features("a")
-        assert a_feats is not None
-        assert self.sys.partial_match(vowel_feats, a_feats)
-
-
-class TestDistinctiveFeatureSystem:
-    def setup_method(self) -> None:
-        self.sys = DistinctiveFeatureSystem()
-
-    def test_name(self) -> None:
-        assert self.sys.name == "distinctive"
-
-    def test_grapheme_a(self) -> None:
-        feats = self.sys.grapheme_to_features("a")
-        assert feats is not None
-        assert "vowel" in feats
-
-    def test_scalars(self) -> None:
-        scalars = self.sys.grapheme_to_scalars("a")
-        assert scalars is not None
-        assert isinstance(scalars, dict)
-
-    def test_is_class(self) -> None:
-        assert self.sys.is_class("V") is True
+# TestTresoldiFeatureSystem and TestDistinctiveFeatureSystem tested 1.x's own
+# feature tables, removed in 2.0 (docs/v2/DESIGN.md 3.4).

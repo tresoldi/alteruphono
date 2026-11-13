@@ -136,8 +136,9 @@ const ap1_class ap1_classes[] = {
     {"V", "vowel"},
     {"VN", "vowel,nasalized"},
     {"VL", "vowel,long"},
+    {"XXX", "vowel,open,front,unrounded,long,nasalized"},
 };
-const size_t ap1_class_count = 19;
+const size_t ap1_class_count = 20;
 
 const char *const ap1_universe[] = {
     "a",

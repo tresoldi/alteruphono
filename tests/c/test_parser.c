@@ -28,6 +28,24 @@ static void check_json(ap_context *ctx, const char *text, const char *expected)
 
     CHECK(ap_rule_parse(ctx, text, &r, NULL) == AP_OK);
     CHECK(ap_rule_to_json(ctx, r, &json) == AP_OK);
+    if (json != NULL) {
+        /* segment ids depend on interning order: mask them as "@" */
+        char *rd = json;
+        char *wr = json;
+        while (*rd != '\0') {
+            if (strncmp(rd, "\"id\":", 5) == 0) {
+                rd += 5;
+                while (*rd >= '0' && *rd <= '9') {
+                    rd++; /* skip first: the write below may overlap */
+                }
+                memcpy(wr, "\"id\":@", 6);
+                wr += 6;
+            } else {
+                *wr++ = *rd++;
+            }
+        }
+        *wr = '\0';
+    }
     if (json == NULL || strcmp(json, expected) != 0) {
         fprintf(stderr, "json for %s:\n  got      %s\n  expected %s\n", text, json ? json : "(null)", expected);
         failures++;
@@ -71,14 +89,14 @@ int main(void)
     /* the token tree */
     check_json(ctx, "p > b / V _",
         "{\"source\":\"p > b / V _\",\"left_len\":1,\"right_len\":0,\"ante\":["
-        "{\"kind\":\"segment\",\"grapheme\":\"V\",\"features\":[\"vowel\"],\"partial\":true},"
-        "{\"kind\":\"segment\",\"grapheme\":\"p\",\"features\":[\"bilabial\",\"consonant\",\"stop\",\"voiceless\"],\"partial\":false}],"
+        "{\"kind\":\"segment\",\"id\":@,\"grapheme\":\"V\",\"features\":[\"vowel\"],\"partial\":true},"
+        "{\"kind\":\"segment\",\"id\":@,\"grapheme\":\"p\",\"features\":[\"bilabial\",\"consonant\",\"stop\",\"voiceless\"],\"partial\":false}],"
         "\"post\":[{\"kind\":\"backref\",\"index\":0,\"modifier\":null},"
-        "{\"kind\":\"segment\",\"grapheme\":\"b\",\"features\":[\"bilabial\",\"consonant\",\"stop\",\"voiced\"],\"partial\":false}]}");
+        "{\"kind\":\"segment\",\"id\":@,\"grapheme\":\"b\",\"features\":[\"bilabial\",\"consonant\",\"stop\",\"voiced\"],\"partial\":false}]}");
     check_json(ctx, "!# C? > @1[+voiced] :null:",
         "{\"source\":\"!# C? > @1[+voiced] :null:\",\"left_len\":0,\"right_len\":0,\"ante\":["
         "{\"kind\":\"negation\",\"inner\":{\"kind\":\"boundary\"}},"
-        "{\"kind\":\"quantified\",\"quantifier\":\"?\",\"inner\":{\"kind\":\"segment\",\"grapheme\":\"C\",\"features\":[\"consonant\"],\"partial\":true}}],"
+        "{\"kind\":\"quantified\",\"quantifier\":\"?\",\"inner\":{\"kind\":\"segment\",\"id\":@,\"grapheme\":\"C\",\"features\":[\"consonant\"],\"partial\":true}}],"
         "\"post\":[{\"kind\":\"backref\",\"index\":0,\"modifier\":\"+voiced\"},{\"kind\":\"empty\"}]}");
 
     /* sequences */

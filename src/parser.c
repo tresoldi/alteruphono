@@ -655,7 +655,10 @@ static void jtok(jbuf *b, const ap_context *ctx, const api_tok *t)
         const ap_segment *s = api_seg(ctx, t->seg);
         char **labels = NULL;
         size_t n = 0;
-        jlit(b, "{\"kind\":\"segment\",\"grapheme\":");
+        snprintf(num, sizeof(num), "%lu", (unsigned long)t->seg);
+        jlit(b, "{\"kind\":\"segment\",\"id\":");
+        jlit(b, num);
+        jlit(b, ",\"grapheme\":");
         jstr(b, s->grapheme);
         jlit(b, ",\"features\":[");
         if (ap_seg_labels(ctx, t->seg, &labels, &n) != AP_OK) {

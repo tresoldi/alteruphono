@@ -20,11 +20,15 @@ class TestToneParsing:
         assert "with_mid_tone" in s.features
 
     def test_toned_sounds_have_tone_features(self) -> None:
-        """Check a sample of toned sounds from sounds.tsv."""
-        from alteruphono.resources import load_sounds
+        """Many graphemes of the universe carry a tone label (from merkmal)."""
+        from alteruphono.features import get_system
+        from alteruphono.resources import load_graphemes
 
-        sounds = load_sounds()
-        toned = {g: n for g, n in sounds.items() if "with_" in n}
+        system = get_system()
+        toned = [
+            g for g in load_graphemes()
+            if any(f.startswith("with_") for f in (system.grapheme_to_features(g) or ()))
+        ]
         assert len(toned) > 50, "Expected many toned sounds in inventory"
 
         sys = get_system("ipa")
