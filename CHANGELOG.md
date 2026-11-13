@@ -4,6 +4,16 @@ All notable changes to AlteruPhono will be documented in this file.
 
 ## [Unreleased]
 
+### 2.0 design (M0, for approval)
+- `docs/v2/DESIGN.md`: design of alteruphono 2.0 (C99 core on merkmal, Python
+  bindings keeping the 1.x API, and a learned directional change model), with
+  design notes for merkmal, regulae, yvyra, blindrec and historia in
+  `docs/v2/notes/`. Nothing is implemented yet.
+- Found while reading 1.x (not yet fixed; see DESIGN §2): quantified rules
+  ignore or duplicate material (`p > b / V _ V?` changes nothing;
+  `C? p > @1 b / V _` duplicates segments); the `ipa` system marks `ʈʂː` as
+  voiced.
+
 ### Fixed
 - Rule contexts are no longer consumed during matching: `forward()` and the
   probabilistic path of `apply_gradient()` now apply rules simultaneously
