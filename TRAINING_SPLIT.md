@@ -105,4 +105,13 @@ kaikki files are not versioned upstream: their checksums are the only identity, 
 
 ## 8. Deviations
 
-None yet.
+1. **2026-11-13: the extraction rules were committed with the first fit, not before it.** The first fit was M3's two baseline scalars (P(stay) and the distance temperature) on Uto-Aztecan. The rules are in `alteruphono/model/extract.py`'s docstring:
+   - nearest-proto-ancestor pairing by Glottolog classification;
+   - a doculect with no Glottocode as its dataset's root;
+   - segment cleaning;
+   - alignment with gap cost 0.55.
+
+   They were written before that fit and not changed after it, but they reached the repository in the same commit. Glottolog CLDF v5.2 is pinned:
+   - `languages.csv` sha256 `c3007b0650e3fdb792d2f0ac5c3ac6f5e8d807a3608096f07ae34cfb0c4c9664`;
+   - `values.csv` sha256 `a7fbfbada2dfc53bec34e4250300d9d4eac4b5836f0871e9213f6bec4445a964`.
+2. **2026-11-13: the Index Diachronica leave-out is by top-level `\section`**, which is cleaner than blindrec's keyword list. The removed sections are Indo-European, Austronesian, Niger-Congo, Sino-Tibetan, Trans-New Guinea, Macro-Arawakan, Totozoquean (it contains Mixe-Zoque), and two sections without family provenance: "Vowel Shifts" and "Most-Wanted Sound Changes". Each evaluated family's own section is removed as well. alteruphono's own `sound_changes.tsv` has no family labels and is used whole; it may contain changes from excluded families.
