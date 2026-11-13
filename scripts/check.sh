@@ -37,7 +37,7 @@ if [[ $FULL == 1 ]]; then
         -DAP_BUILD_FUZZERS=ON -DAP_BUILD_TESTS=OFF -DAP_BUILD_TOOLS=OFF \
         -DAP_MERKMAL_SOURCE_DIR="$MERKMAL" > "$DIR/fuzz.configure.log"
     cmake --build "$DIR/fuzz" -j "$JOBS" > "$DIR/fuzz.build.log" 2>&1 || { tail -40 "$DIR/fuzz.build.log"; exit 1; }
-    for t in parse_rule parse_sequence apply; do
+    for t in parse_rule parse_sequence apply model_load; do
         mkdir -p "$DIR/fuzz/corpus_$t"
         "$DIR/fuzz/fuzz_$t" -max_total_time="$SECONDS_PER_FUZZER" -max_len=512 \
             "$DIR/fuzz/corpus_$t" "$ROOT/fuzz/corpus" > "$DIR/fuzz_$t.log" 2>&1 \

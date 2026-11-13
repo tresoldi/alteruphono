@@ -851,6 +851,125 @@ static PyObject *features_grapheme(PyObject *self, PyObject *args)
     return PyUnicode_FromString(g);
 }
 
+
+/* ---- the change model ---------------------------------------------------- */
+
+#define MODEL_NAME "alteruphono._native.model"
+
+static void model_destroy(PyObject *capsule)
+{
+    ap_model *m = (ap_model *)PyCapsule_GetPointer(capsule, MODEL_NAME);
+    PyObject *ctx = (PyObject *)PyCapsule_GetContext(capsule);
+
+    ap_model_free(m);
+    Py_XDECREF(ctx);
+}
+
+static PyObject *model_load(PyObject *self, PyObject *args)
+{
+    PyObject *cap;
+    const char *text;
+    Py_ssize_t len;
+    native_ctx *n;
+    ap_model *m = NULL;
+    ap_diagnosis d;
+    ap_status st;
+    PyObject *mcap;
+
+    (void)self;
+    if (!PyArg_ParseTuple(args, "Os#", &cap, &text, &len) || (n = get_ctx(cap)) == NULL) {
+        return NULL;
+    }
+    memset(&d, 0, sizeof(d));
+    st = ap_model_load(n->ctx, text, (size_t)len, &m, &d);
+    if (st != AP_OK) {
+        return raise_status(st, &d, NULL);
+    }
+    mcap = PyCapsule_New(m, MODEL_NAME, model_destroy);
+    if (mcap == NULL) {
+        ap_model_free(m);
+        return NULL;
+    }
+    Py_INCREF(cap);
+    PyCapsule_SetContext(mcap, cap);
+    return mcap;
+}
+
+static PyObject *model_score(PyObject *args, int logprob)
+{
+    PyObject *cap;
+    PyObject *mcap;
+    PyObject *cands;
+    PyObject *fast;
+    const char *s;
+    const char *l;
+    const char *r;
+    double offset = 0.0;
+    native_ctx *n;
+    ap_model *m;
+    Py_ssize_t k;
+    Py_ssize_t i;
+    const char **arr;
+    double *out;
+    ap_status st;
+    PyObject *res;
+
+    if (!PyArg_ParseTuple(args, "OOsssO|d", &cap, &mcap, &s, &l, &r, &cands, &offset) || (n = get_ctx(cap)) == NULL
+        || (m = (ap_model *)PyCapsule_GetPointer(mcap, MODEL_NAME)) == NULL) {
+        return NULL;
+    }
+    fast = PySequence_Fast(cands, "candidates must be a sequence of str");
+    if (fast == NULL) {
+        return NULL;
+    }
+    k = PySequence_Size(fast);
+    arr = (const char **)malloc(((size_t)k + 1) * sizeof(char *));
+    out = (double *)malloc(((size_t)k + 1) * sizeof(double));
+    if (arr == NULL || out == NULL) {
+        free(arr);
+        free(out);
+        Py_DECREF(fast);
+        return PyErr_NoMemory();
+    }
+    for (i = 0; i < k; i++) {
+        PyObject *item = PySequence_GetItem(fast, i);
+        arr[i] = item != NULL ? PyUnicode_AsUTF8AndSize(item, NULL) : NULL;
+        Py_XDECREF(item);
+        if (arr[i] == NULL) {
+            free(arr);
+            free(out);
+            Py_DECREF(fast);
+            return NULL;
+        }
+    }
+    st = logprob ? ap_model_logprob(m, n->ctx, s, l, r, arr, (size_t)k, offset, out)
+                 : ap_model_eta(m, n->ctx, s, l, r, arr, (size_t)k, offset, out);
+    free(arr);
+    Py_DECREF(fast);
+    if (st != AP_OK) {
+        free(out);
+        return raise_status(st, NULL, NULL);
+    }
+    res = PyList_New(k);
+    for (i = 0; res != NULL && i < k; i++) {
+        PyList_SetItem(res, i, PyFloat_FromDouble(out[i]));
+    }
+    free(out);
+    return res;
+}
+
+static PyObject *model_eta(PyObject *self, PyObject *args)
+{
+    (void)self;
+    return model_score(args, 0);
+}
+
+static PyObject *model_logprob(PyObject *self, PyObject *args)
+{
+    (void)self;
+    return model_score(args, 1);
+}
+
 static PyObject *version(PyObject *self, PyObject *args)
 {
     (void)self;
@@ -874,6 +993,10 @@ static PyMethodDef methods[] = {
     { "grapheme_features", grapheme_features, METH_VARARGS, "grapheme_features(ctx, g) -> labels | None" },
     { "class_features", class_features, METH_VARARGS, "class_features(ctx, name) -> labels | None" },
     { "features_grapheme", features_grapheme, METH_VARARGS, "features_grapheme(ctx, labels) -> str | None" },
+    { "model_load", model_load, METH_VARARGS, "model_load(ctx, text) -> model" },
+    { "model_eta", model_eta, METH_VARARGS, "model_eta(ctx, model, s, left, right, candidates[, offset]) -> [eta]" },
+    { "model_logprob", model_logprob, METH_VARARGS,
+      "model_logprob(ctx, model, s, left, right, candidates[, offset]) -> [log p]" },
     { "version", version, METH_NOARGS, "version() -> (version, abi)" },
     { NULL, NULL, 0, NULL }
 };

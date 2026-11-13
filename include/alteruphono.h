@@ -171,6 +171,37 @@ AP_API ap_status ap_candidates_get(
     const ap_candidates *candidates, size_t index, const ap_seg **sequence, size_t *length);
 AP_API void ap_candidates_free(ap_candidates *candidates);
 
+
+/* ---- the change model (docs/v2/DESIGN.md 6; docs/v2/CALIBRATION_M4b.md) ----
+ *
+ * A pack is text: a version line, the merkmal system and its feature-vector
+ * labels (checked against the context's system at load), the parameters, and
+ * the catalogue rules with their weights (compiled in the context). Packs
+ * built from Index Diachronica carry its rules verbatim and are never
+ * committed (DESIGN D6).
+ *
+ * The model caches feature vectors, distances and per-environment catalogue
+ * reflexes, so it is used by one thread at a time, like its context, and only
+ * with the context it was loaded into.
+ *
+ * eta(y) is the model's linear predictor for each candidate reflex (0 for the
+ * source itself, which is "no change"); "-" is deletion; left and right are
+ * proto-neighbours or "#". branch_offset is added to every change (0 = the
+ * population mean). Relative rates, for a consumer that sets its own overall
+ * rate, are exp(eta) over the candidates other than the source. */
+
+typedef struct ap_model ap_model;
+
+AP_API ap_status ap_model_load(
+    ap_context *context, const char *text, size_t length, ap_model **out, ap_diagnosis *diagnosis);
+AP_API void ap_model_free(ap_model *model);
+AP_API ap_status ap_model_eta(
+    ap_model *model, ap_context *context, const char *source, const char *left, const char *right,
+    const char *const *candidates, size_t count, double branch_offset, double *eta);
+AP_API ap_status ap_model_logprob(
+    ap_model *model, ap_context *context, const char *source, const char *left, const char *right,
+    const char *const *candidates, size_t count, double branch_offset, double *logp);
+
 #ifdef __cplusplus
 }
 #endif

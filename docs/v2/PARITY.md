@@ -148,3 +148,19 @@ As DESIGN §9 predicted, faster rule application roughly halves the v4 simulator
 | `parse_sequence` | 12–19 | 2.1–3.8 | about 5× | (none) |
 
 The uncached Python parse is no faster than 1.x. The C parse takes 1.5 µs; the rest goes on decoding the token tree from JSON and building 1.x's dataclasses. Repeated rule texts are served from a bounded cache keyed on the exact source string, which is safe because a `Rule` is immutable.
+
+## The change-model scorer (C) against the Python fitter (2026-11-13)
+
+**What was compared.** `tests/parity/model_parity.py` exports M4's fitted parameters with each held-out family's catalogue. It then scores every opportunity in C (`ap_model_logprob`) and with the Python reference (`fit.py`'s design matrix).
+
+**Agreement.** The largest difference of log-probabilities is **3.6 × 10⁻¹⁵**, over 184,101 candidate scores on 5,708 opportunities.
+
+**Speed**, through the Python API on this machine, with about 37 candidates per opportunity:
+
+| scorer | per opportunity | ratio |
+|---|---|---|
+| Python reference | 1.2–1.6 ms | |
+| C, warm caches | 11–14 µs | about 100× |
+| C, cold caches | 100–200 µs | every catalogue rule runs once per new environment |
+
+DESIGN §9's targets were ≥ 20× (met) and ≤ 0.2 µs per opportunity in C. The second is **not met**: it comes to about 0.3–0.4 µs per *candidate*, including the Python crossing.

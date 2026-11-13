@@ -626,6 +626,12 @@ The proposal is **60 families per list length**: 15 per template, minimum detect
 
 ## 12. Mistakes and corrections in this draft
 
+- **§6.7 as built (2026-11-13) differs from the sketch.**
+  - **Pack format.** Packs are tab-separated text, not JSON, so the C core needs no JSON parser. A pack holds the parameters, the merkmal labels it was fitted against (checked at load) and the catalogue rules.
+  - **API.** The scorer takes graphemes, not segment ids: `ap_model_eta` and `ap_model_logprob`.
+  - **Mutability.** A model caches feature vectors, distances and per-environment catalogue reflexes, so it is **mutable**: it is used by one thread at a time, with the context it was loaded into. The sketch called it immutable.
+  - **Not built:** sampling, asymmetry intervals and Laplace draws. The posterior covariance stays in the fitter's output (`*_cov.npy`).
+
 - I first ran the catalogue test pairs without boundaries and got 571 of 801. The test forms in `sound_changes.tsv` omit `#`. Wrapped, all 801 pass, and the suite in §8.2 wraps them.
 - The prompt says simulators v5–v9 agreed with alteruphono on 50,000/50,000 applications. Only simulator v5 was checked (`scripts/check_soundengine.py`). v6, v7 and v9 reuse its engine (`synth5.Simulator5`), so the agreement covers them by inheritance, not by a separate check.
 - **The `labial` rule in §4.1 was wrong as first written (found in M1).** "Drop `labial`" also removed the only place label of the 42 bilabial clicks (`ʘ`, `gʘ`, `ŋʘ`, …), for which 1.x uses `labial` as the place. The parity harness showed it as feature-only differences on `ʘ`. The rule now drops `labial` only where a finer place label is present. With it, the projection equals 1.x for 7,342 of the 7,353 graphemes merkmal resolves; the other 11 are exactly the D1 cases.

@@ -73,6 +73,7 @@ add_library(alteruphono
     src/match.c
     src/forward.c
     src/backward.c
+    src/model.c
     src/generated/compat1x.c
 )
 add_library(alteruphono::alteruphono ALIAS alteruphono)
@@ -84,6 +85,9 @@ target_include_directories(alteruphono
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 target_link_libraries(alteruphono PUBLIC merkmal::merkmal)
+if(NOT MSVC)
+    target_link_libraries(alteruphono PUBLIC m)
+endif()
 set_target_properties(alteruphono PROPERTIES
     C_VISIBILITY_PRESET hidden
     VERSION ${PROJECT_VERSION}
@@ -111,7 +115,7 @@ endif()
 
 if(AP_BUILD_TESTS)
     include(CTest)
-    foreach(t context parser forward backward catalogue)
+    foreach(t context parser forward backward catalogue model)
         add_executable(test_${t} tests/c/test_${t}.c)
         target_link_libraries(test_${t} PRIVATE alteruphono)
         target_compile_options(test_${t} PRIVATE -UNDEBUG)
@@ -121,7 +125,7 @@ if(AP_BUILD_TESTS)
 endif()
 
 if(AP_BUILD_FUZZERS)
-    foreach(t parse_rule parse_sequence apply)
+    foreach(t parse_rule parse_sequence apply model_load)
         add_executable(fuzz_${t} fuzz/fuzz_${t}.c)
         target_link_libraries(fuzz_${t} PRIVATE alteruphono)
         target_link_options(fuzz_${t} PRIVATE -fsanitize=fuzzer,address,undefined)

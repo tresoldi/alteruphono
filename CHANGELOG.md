@@ -4,6 +4,13 @@ All notable changes to AlteruPhono will be documented in this file.
 
 ## [Unreleased]
 
+### 2.0: the change-model scorer in C
+- `ap_model_load`, `ap_model_eta`, `ap_model_logprob` (src/model.c), a
+  text pack format (alteruphono/model/pack.py exports it), Python access via
+  `alteruphono.model.pack.ChangeModel`. Agrees with the Python fitter to
+  3.6e-15 on 184,101 candidate scores; about 100x faster. Tested
+  (tests/c/test_model.c), fuzzed (fuzz_model_load), ASan/UBSan clean.
+
 ### 2.0, M3 and M4: the change model
 - M3 (docs/v2/CALIBRATION_M3.md): the catalogue alone gives no usable rate,
   and as the shape of change it loses to phonetic distance.
