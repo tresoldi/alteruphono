@@ -4,7 +4,28 @@ All notable changes to AlteruPhono will be documented in this file.
 
 ## [Unreleased]
 
-### 2.0 design (M0, for approval)
+### 2.0, M1: the C engine at parity
+- C99 core (`include/alteruphono.h`, `src/`): parser, matcher, `forward`,
+  `backward` and 1.x's syllabifier, on merkmal (`alteruphono-1` projection,
+  DESIGN 4.1). Segments are interned per context; class tests are bitset
+  operations. No global mutable state.
+- Requires merkmal branch `claude/alteruphono-support` (`mk_system_inventory`,
+  `mk_unicode_normalize`).
+- Parity (docs/v2/PARITY.md): 0 disagreements with the Python reference on
+  251,607 cases, including blindrec's 50,000-application gate stream and all
+  801 catalogue test pairs. Feature changes from merkmal are confined to 11
+  listed graphemes.
+- Fixed relative to 1.x (D2): quantified rules apply simultaneously (Q1, Q2);
+  `backward` keeps every alternative and a choice in the output is refused
+  (from `3fdb52b`); `backward` refuses products over 100,000 candidates
+  instead of building them.
+- Tests (`tests/c/`), libFuzzer targets (`fuzz/`), `scripts/check.sh`
+  (gcc/clang -Werror, ASan, UBSan, fuzzing), parity harness (`tests/parity/`),
+  benchmarks (`bench/`).
+- My mistake, caught by the parity harness: the first projection dropped
+  `labial` everywhere, removing the place of bilabial clicks (`ʘ`).
+
+### 2.0 design (M0, approved 2026-11-13 with the defaults of section 11)
 - `docs/v2/DESIGN.md`: design of alteruphono 2.0 (C99 core on merkmal, Python
   bindings keeping the 1.x API, and a learned directional change model), with
   design notes for merkmal, regulae, yvyra, blindrec and historia in

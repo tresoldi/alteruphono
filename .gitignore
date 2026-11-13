@@ -102,3 +102,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# alteruphono 2.0 C builds
+/build/
+/fuzz/corpus_*/

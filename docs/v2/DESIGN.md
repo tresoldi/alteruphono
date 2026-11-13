@@ -189,7 +189,7 @@ The differences fall into a few classes, and the parity plan in §8 is built on 
 
 | class | graphemes | cause | proposed handling in projection `alteruphono-1` |
 |---|---|---|---|
-| merkmal adds `labial` to labials (`b p f v m w ɸ β ʋ …`) | 860 | merkmal has a hierarchical major-place label; in 1.x `labial` is a place value and replaces `bilabial` under `add_features` | drop `labial` from the projected set |
+| merkmal adds `labial` to labials (`b p f v m w ɸ β ʋ …`) | 860 | merkmal has a hierarchical major-place label; in 1.x `labial` is a place value and replaces `bilabial` under `add_features` | drop `labial` when a finer place label (`bilabial`, `labio-dental`, …) is present; keep it when it is the only place (`ʘ`: see §12) |
 | tone: 1.x `with_falling_tone` etc., merkmal `tone-onset-*`/`tone-present` | 131 | different tone encodings | map merkmal's tone labels to the 1.x names in the projection; list any graphemes that do not map |
 | `mid` vs `close-mid lowered` (`ê̞ ô̞ ɤ̞̟̃ …`) | 8 | different description of lowered close-mid vowels | accept merkmal; list as diffs |
 | `ʈʂː` `voiced` (1.x) vs `voiceless` | 1 | 1.x data error (Q4) | accept merkmal |
@@ -628,4 +628,5 @@ The proposal is **60 families per list length**: 15 per template, minimum detect
 
 - I first ran the catalogue test pairs without boundaries and got 571 of 801. The test forms in `sound_changes.tsv` omit `#`. Wrapped, all 801 pass, and the suite in §8.2 wraps them.
 - The prompt says simulators v5–v9 agreed with alteruphono on 50,000/50,000 applications. Only simulator v5 was checked (`scripts/check_soundengine.py`). v6, v7 and v9 reuse its engine (`synth5.Simulator5`), so the agreement covers them by inheritance, not by a separate check.
+- **The `labial` rule in §4.1 was wrong as first written (found in M1).** "Drop `labial`" also removed the only place label of the 42 bilabial clicks (`ʘ`, `gʘ`, `ŋʘ`, …), for which 1.x uses `labial` as the place. The parity harness showed it as feature-only differences on `ʘ`. The rule now drops `labial` only where a finer place label is present. With it, the projection equals 1.x for 7,342 of the 7,353 graphemes merkmal resolves; the other 11 are exactly the D1 cases.
 - The prompt counts "219+" upstream tests. That was the count when blindrec vendored `607b9f5`; master has 233.
