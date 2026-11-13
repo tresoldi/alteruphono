@@ -31,13 +31,15 @@ SOURCES = (
     ["python/_native.c"]
     + sorted(rel(p) for p in glob.glob(os.path.join(HERE, "src", "*.c")))
     + ["src/generated/compat1x.c"]
+    # merkmal's sources by absolute path: a relative path climbing out of
+    # this directory makes setuptools write their objects outside build/
     + sorted(
-        rel(p)
+        os.path.abspath(p)
         for pattern in ("src/*.c", "src/generated/*.c")
         for p in glob.glob(os.path.join(MERKMAL, pattern))
         if os.path.abspath(p) != os.path.abspath(merkmal_full_data)
     )
-    + [rel(os.path.join(MERKMAL, "src", "generated", "cc-by", "builtin_data.c"))]
+    + [os.path.abspath(os.path.join(MERKMAL, "src", "generated", "cc-by", "builtin_data.c"))]
 )
 
 SANITIZE = os.environ.get("AP_SANITIZE", "")
