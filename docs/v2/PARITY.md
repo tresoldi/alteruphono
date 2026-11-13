@@ -105,3 +105,46 @@ The other 211 upstream tests pass unchanged. They include the simultaneous-appli
 - **B** with this branch's package in `vendor/alteruphono`.
 
 blindrec's code was not changed. The sealing guard was on throughout, and nothing under `data/sealed/` was read or compared.
+
+**Checks run, and results:**
+
+| check | A (1.x) | B (2.0) | identical |
+|---|---|---|---|
+| blindrec's test suite | 25 passed, 1 skipped | 25 passed, 1 skipped | same result |
+| gate G1, `scripts/check_soundengine.py 2000 800` | 50,000/50,000 agree, 6,217 changed | 50,000/50,000 agree, 6,217 changed | same result |
+| simulator v4: `synth4 140 140s 141s` (uses alteruphono's `forward`) | | | **byte-identical** `data/work` |
+| simulator v5: `synth5 800 800s` (uses alteruphono's features in `changegen`) | | | **byte-identical** `data/work` |
+| v3 pipeline on `synth-140s`, `synth-800s`, `synth-140`: relatedness, cognates, phylo, yvyra, network, recon, morph, loans | | | **byte-identical** `data/work_v3`, except yvyra's run files (below) |
+| v8 stage 5 (recon, loans) on the same three tracks, as `scripts/run_v8.sh` | | | **byte-identical** `data/work_v8` |
+
+**yvyra's run files.** In all 57 of them, the only differences are a run ID header (`[ID: …]`). In the logs there are also three more lines: an unused clock-derived start-value seed (the analysis seed is set to 1), the MCMC stamp, and CPU time. None of these comes from alteruphono. The posterior samples, trees and consensus trees are otherwise identical.
+
+**Not run.**
+- The LexStat/SCA baselines stage needs lingpy, which is not installed here. It does not use alteruphono, and v8 does not read its outputs.
+- The real tracks (Romance, Germanic, Tukanoan, Tier B) need data that are not in this environment. On them, results can differ only through the 14 graphemes listed above, and only if a track's inventory contains one of them.
+
+**Speed in blindrec** (wall clock, one machine, sequential):
+
+| stage | A (1.x) | B (2.0) |
+|---|---|---|
+| simulator v4, `synth4 140s` | 21.7 s | 11.1 s |
+| simulator v4, `synth4 140 141s` | 217.8 s | 113.2 s |
+| simulator v5, `synth5 800s 800` | 101.4 s | 109.2 s |
+| v3 pipeline (sum of 3 tracks) | 1,073 s | 1,058 s |
+| v8 stage 5 (sum of 3 tracks) | 44 s | 40 s |
+
+As DESIGN §9 predicted, faster rule application roughly halves the v4 simulator's time. It leaves the v5 simulator (its own engine) and stage 5 (`expm` and EM) essentially unchanged; the 1–10% differences in those rows are within run-to-run noise. Any speed-up of stage 5 would have to come from the change model, not from this port.
+
+## Speed through the Python API (M2)
+
+`bench/bench_python.py` runs the same stream as M1, with 20,000 pairs, warm. Two runs of each:
+
+| operation | 1.x (µs) | 2.0 (µs) | ratio | target |
+|---|---|---|---|---|
+| `forward` | 25.0–27.0 | 0.97–1.0 | about 25× | ≥ 20×: **met** |
+| `backward` | 31–37 | 2.6–2.7 | about 12–14× | ≥ 20×: **not met** |
+| `parse_rule`, uncached | 12–18 | 16–22 | about 1× (no faster) | ≥ 20×: **not met** |
+| `parse_rule`, repeated text (cached by source) | 12–18 | 0.14–0.18 | (a cache hit) | |
+| `parse_sequence` | 12–19 | 2.1–3.8 | about 5× | (none) |
+
+The uncached Python parse is no faster than 1.x. The C parse takes 1.5 µs; the rest goes on decoding the token tree from JSON and building 1.x's dataclasses. Repeated rule texts are served from a bounded cache keyed on the exact source string, which is safe because a `Rule` is immutable.

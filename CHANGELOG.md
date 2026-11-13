@@ -4,6 +4,23 @@ All notable changes to AlteruPhono will be documented in this file.
 
 ## [Unreleased]
 
+### 2.0, M2: Python bindings, and blindrec on 2.0
+- `alteruphono._native` (abi3, Python >= 3.12) compiles the C core and
+  merkmal (cc-by data profile only); the 1.x Python API runs on it unchanged.
+- Removed (decision 2): 1.x's feature tables (`sounds.tsv` names,
+  `features.tsv`), the `tresoldi` and `distinctive` systems, `load_sounds`,
+  `load_features`. Kept: 1.x's label vocabulary, the grapheme inventory
+  (`graphemes_1x.txt`), the class pack, the 1.x geometry distance (D3).
+- Upstream tests: 211 of 233 unchanged and passing; 18 removed and 4 edited,
+  each for a removed module (docs/v2/PARITY.md).
+- blindrec with 2.0 in place of its vendored 1.x: byte-identical outputs on
+  five simulated tracks (simulators v4 and v5) and through the v3 pipeline
+  and v8 stage 5 on three of them; the v4 simulator runs about twice as fast.
+- Python-API speed: forward about 25x faster than 1.x; backward about 12x and
+  uncached parsing about 1x, short of the 20x target.
+- My mistake: I first dropped the development class `XXX` from the class
+  pack, a needless break caught by an upstream test; it is back.
+
 ### 2.0, M1: the C engine at parity
 - C99 core (`include/alteruphono.h`, `src/`): parser, matcher, `forward`,
   `backward` and 1.x's syllabifier, on merkmal (`alteruphono-1` projection,
