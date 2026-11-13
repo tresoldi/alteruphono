@@ -121,3 +121,4 @@ kaikki files are not versioned upstream: their checksums are the only identity, 
    - **A filter error, fixed at the same time:** the family filter wrongly dropped Proto-Selkup, -Mari, -Khanty and -Mansi.
 
    Result: Uralic 2,613 aligned pairs (11,286 opportunities; 129 forms unconvertible), Turkic 424 (1,647; 93), Japonic 423 (1,727; 23).
+4. **2026-11-13: the σ grid of `alteruphono/model/fit.py` was extended** from (0.1, 0.3, 1, 3) to include 0.01 and 0.03, because 0.1, the edge, won. This was decided on the fitting families' leave-one-family-out loss only, before the held-out families were scored.

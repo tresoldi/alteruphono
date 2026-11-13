@@ -4,6 +4,16 @@ All notable changes to AlteruPhono will be documented in this file.
 
 ## [Unreleased]
 
+### 2.0, M3 and M4: the change model
+- M3 (docs/v2/CALIBRATION_M3.md): the catalogue alone gives no usable rate,
+  and as the shape of change it loses to phonetic distance.
+- M4 (docs/v2/CALIBRATION_M4.md): the fitted model (distance base, learned
+  catalogue weight lambda = 0.265 +/- 0.012, directional displacement,
+  assimilation, environment) beats every baseline on held-out log-loss, but
+  **fails the pre-registered calibration gate** (ECE of P(change) 0.166 and
+  0.095, threshold 0.05). M4 stops: no stage-5 test, no held-out seeds spent.
+- TRAINING_SPLIT.md committed before any fit; four deviations logged.
+
 ### 2.0, M2: Python bindings, and blindrec on 2.0
 - `alteruphono._native` (abi3, Python >= 3.12) compiles the C core and
   merkmal (cc-by data profile only); the 1.x Python API runs on it unchanged.
