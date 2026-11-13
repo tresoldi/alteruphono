@@ -106,3 +106,6 @@ venv.bak/
 # alteruphono 2.0 C builds
 /build/
 /fuzz/corpus_*/
+
+# fetched training data (never committed; see TRAINING_SPLIT.md)
+/data/
