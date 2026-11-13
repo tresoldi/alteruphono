@@ -71,7 +71,7 @@ Reliability over all candidate probabilities (mean predicted → observed freque
    - Vietic: shape part 2.72 for distance against 3.11 for the catalogue;
    - Bora–Muinane: 2.52 against 2.96.
 
-   The catalogue model beats uniform and blindrec's incumbent, and loses to distance overall (intervals above). This is a negative result for the catalogue as a prior *on its own*. Whether it adds anything on top of data, through the learned weight λ, is M4's question; λ ≈ 0 is an allowed answer.
+   Overall, the catalogue model loses clearly to distance and beats blindrec's incumbent. It cannot be told apart from uniform: both paired intervals include 0. Its shape is better than uniform's, but its stipulated rate costs it what the shape gains. This is a negative result for the catalogue as a prior *on its own*. Whether it adds anything on top of data, through the learned weight λ, is M4's question; λ ≈ 0 is an allowed answer.
 3. **blindrec's incumbent is the worst calibrated.** `historia/direction.py` has the highest log-loss on both families. Its reliability curve has a bin in which it assigns about 0.85 on average to outcomes that occur 0.5% (Vietic) and 7.6% (Bora–Muinane) of the time. I have not traced the cause; its fixed identity share interacting with renormalisation over the candidate set is a guess, not a finding. It has also seen Austroasiatic's catalogue section, which can only have helped it.
 
 ## Limits
