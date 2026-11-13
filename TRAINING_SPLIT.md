@@ -115,3 +115,9 @@ kaikki files are not versioned upstream: their checksums are the only identity, 
    - `languages.csv` sha256 `c3007b0650e3fdb792d2f0ac5c3ac6f5e8d807a3608096f07ae34cfb0c4c9664`;
    - `values.csv` sha256 `a7fbfbada2dfc53bec34e4250300d9d4eac4b5836f0871e9213f6bec4445a964`.
 2. **2026-11-13: the Index Diachronica leave-out is by top-level `\section`**, which is cleaner than blindrec's keyword list. The removed sections are Indo-European, Austronesian, Niger-Congo, Sino-Tibetan, Trans-New Guinea, Macro-Arawakan, Totozoquean (it contains Mixe-Zoque), and two sections without family provenance: "Vowel Shifts" and "Most-Wanted Sound Changes". Each evaluated family's own section is removed as well. alteruphono's own `sound_changes.tsv` has no family labels and is used whole; it may contain changes from excluded families.
+3. **2026-11-13, before any fit on a Wiktionary family: the notation tables were extended once, after counting conversion failures.** The tables are in `alteruphono/model/wiktionary.py`.
+   - **What was added:** Uralic å, ɜ, breve vowels, ľ, and u̇/ȯ; Turkic ŕ, ĺ and ń.
+   - **Why it matters:** the failure counts were looked at, but nothing about the pairs' changes was.
+   - **A filter error, fixed at the same time:** the family filter wrongly dropped Proto-Selkup, -Mari, -Khanty and -Mansi.
+
+   Result: Uralic 2,613 aligned pairs (11,286 opportunities; 129 forms unconvertible), Turkic 424 (1,647; 93), Japonic 423 (1,727; 23).
