@@ -13,6 +13,11 @@ All notable changes to AlteruPhono will be documented in this file.
   **fails the pre-registered calibration gate** (ECE of P(change) 0.166 and
   0.095, threshold 0.05). M4 stops: no stage-5 test, no held-out seeds spent.
 - TRAINING_SPLIT.md committed before any fit; four deviations logged.
+- M4b (docs/v2/CALIBRATION_M4b.md, plan committed first): the model's shape
+  of change beats phonetic distance on the fresh family (Turkic) and on both
+  post hoc families; its rate passes on Turkic after per-branch adaptation
+  but fails on both post hoc families. Use: relative rates only (blindrec
+  variant R), not the model's P(change).
 
 ### 2.0, M2: Python bindings, and blindrec on 2.0
 - `alteruphono._native` (abi3, Python >= 3.12) compiles the C core and
