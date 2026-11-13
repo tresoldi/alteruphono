@@ -53,10 +53,9 @@ These are the differences between 1.x's own feature table and merkmal's labels, 
 
 There are 3,066 differences in the random stream, every one on a rule with a top-level `+` or `?`. None of the 801 catalogue rules, and none in blindrec's stream, has a quantifier. The fixed semantics are implemented twice, independently (C, and `oracle.py`), and the two agree on every case.
 
-### Not yet covered (M2)
+### Not covered in M1
 
-- the 233 upstream Python tests, which need the Python bindings;
-- blindrec's pipeline outputs on the development tracks.
+The upstream Python tests and blindrec's outputs need the bindings; both are in M2 below.
 
 ### A weakness of 1.x, reproduced rather than fixed
 
@@ -74,3 +73,35 @@ Machine: this session's container. Both engines run on the same stream: 801 cata
 | parse a rule | 12–18 | 1.3–1.8 | about 8–13× | ≥ 20×: **not met** |
 
 DESIGN §9's parse target was set against a cold-cache figure (68.9 µs) that I measured carelessly. Against the cold figure, the C parser is about 40× faster; against warm 1.x, which is the fair comparison, it is about 10×. Rule parsing is not on any hot path in blindrec. The Python-API numbers come in M2.
+
+## M2: the Python bindings, and blindrec (2026-11-13)
+
+### Upstream tests
+
+The 233 tests of 1.x (`b466d90`) were run on 2.0 unchanged (`--continue-on-collection-errors`): **191 passed**, and 42 failed or could not be collected. Every one of the 42 tested something 2.0 removes or changes on purpose. After the edits listed below, the suite has 218 tests, all passing.
+
+| tests | count | what happened | why |
+|---|---|---|---|
+| `test_features.py`: `TestTresoldiFeatureSystem` (4), `TestDistinctiveFeatureSystem` (4), `TestRegistry::test_get_tresoldi`, `::test_get_distinctive` | 10 | removed | 1.x's own feature systems are gone (decision 2) |
+| `test_properties.py::TestScalarRoundtrip` | 1 | removed | the same (`distinctive`) |
+| `test_resources.py`: `TestLoadSounds` (4), `TestLoadFeatures` (3) | 7 | removed; replaced by `TestLoadGraphemes` (3) | 1.x's feature tables are gone; the grapheme inventory remains |
+| `test_features.py::TestRegistry::test_list_systems`, `::test_set_default` | 2 | edited: `['ipa']` only | the same |
+| `test_regression.py::TestToneParsing::test_toned_sounds_have_tone_features` | 1 | edited: counts toned graphemes through merkmal's labels instead of 1.x's `sounds.tsv` names (still > 50) | the same |
+| `test_integration.py::TestEndToEnd::test_import_api` | 1 | edited: version `2.0.0.dev0` | version |
+| the 30 tests of `test_features.py` | (30) | the file could not be imported (it imported the removed modules); its other 18 tests pass unchanged once the imports are gone | the same |
+
+`test_regression.py::TestAllTSVClasses::test_all_classes_loaded` failed at first, because I had dropped 1.x's development class `XXX` from the class pack. That was a gratuitous break, and `XXX` is back.
+
+The other 211 upstream tests pass unchanged. They include the simultaneous-application tests, the parser's error messages, `backward`, the engine and ordering tests, the comparative module and the CLI.
+
+### Feature values through the Python API
+
+`get_system().grapheme_to_features` differs from 1.x for exactly **14 of the 7,356 graphemes** in 1.x's inventory. These are the 11 of the M1 table, plus the 3 that merkmal does not resolve (`k`+U+F268, `k`+U+F268+`ʼ`, `oz̻`), which 1.x described and 2.0 treats as unknown. blindrec's `phon.distance` (stage-5 costs) can change only for pairs that involve one of these 14.
+
+### blindrec
+
+**Method.** Two scratch copies of blindrec's code (`prototypes` branch `claude/tender-mccarthy-mve03r`, `ee986949`) were run side by side:
+- **A** with its vendored 1.x;
+- **B** with this branch's package in `vendor/alteruphono`.
+
+blindrec's code was not changed. The sealing guard was on throughout, and nothing under `data/sealed/` was read or compared.

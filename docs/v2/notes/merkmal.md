@@ -12,9 +12,15 @@ rest are proposals for Tiago.
 - `mk_system_semantic_fingerprint`: recorded in every alteruphono context and model pack.
 - `mk_normalize_grapheme`: the boundary normalisation.
 
+## Implemented on merkmal branch `claude/alteruphono-support` (`af81477`)
+
+- `mk_system_inventory` (item 1 below) and `mk_unicode_normalize`: plain NFD/NFC, without the IPA rewrites of `mk_normalize_grapheme`. alteruphono needs it because its notation is defined on NFD, and only the internal `mki_unicode_nfd` provided it.
+- Both are additions, tested in `tests/c/test_inventory.c`, with gcc ASan and UBSan clean, and a CHANGELOG entry.
+- alteruphono 2.0 builds against this branch. `mk_unicode_normalize` is in use. **`mk_system_inventory` is not yet called by anything:** it is for the `native` projection, which 2.0.0 does not implement. It should not be merged on alteruphono's account until that projection exists.
+
 ## Proposed changes
 
-1. **List a system's inventory** (*small*). alteruphono must render a feature set back to a grapheme by exact lookup. merkmal says, correctly, that its compatible-grapheme ranking is display-only. An exact lookup needs the list of graphemes the system knows, and master has no call that returns it.
+1. **List a system's inventory** (*small*; implemented, see above). alteruphono must render a feature set back to a grapheme by exact lookup. merkmal says, correctly, that its compatible-grapheme ranking is display-only. An exact lookup needs the list of graphemes the system knows, and master has no call that returns it.
 
    Proposal: `mk_status mk_system_inventory(const mk_system *sys, mk_string_list **out)`. It would return the compiled inventory in its fixed (UTF-8 byte) order, plus the graphemes of runtime models. It would not include graphemes the resolver synthesizes from diacritics, because those are unbounded.
 
