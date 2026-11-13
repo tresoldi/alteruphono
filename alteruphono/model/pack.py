@@ -9,8 +9,6 @@ git-ignored data/, never commit it (DESIGN D6).
 
 from __future__ import annotations
 
-import merkmal
-
 from alteruphono import _core, _native
 
 MAGIC = "alteruphono-change-model\t1"
@@ -18,6 +16,8 @@ MAGIC = "alteruphono-change-model\t1"
 
 def export(path, names, theta, rules, system="descriptive", note=""):
     """rules: (text, weight) pairs, in order (the fitter's Catalogue.rules)."""
+    import merkmal  # only the exporter needs merkmal's Python package
+
     lines = [MAGIC, f"system\t{system}", "labels\t" + "\t".join(merkmal.vector_labels(system))]
     if note:
         lines.append("% " + note.replace("\n", " "))

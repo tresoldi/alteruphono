@@ -78,12 +78,16 @@ def kernel(s, y, T):
 
 
 class Catalogue:
-    def __init__(self, diachronica_rules, leave_out_sections):
+    def __init__(self, diachronica_rules, leave_out_sections, keep_sections=None):
+        """keep_sections, if given, restricts Index Diachronica to those
+        sections (the half-A catalogue of blindrec's v16 plan)."""
         self.rules = []
         for row in load_sound_changes():
             self.rules.append((row["RULE"], float(row["WEIGHT"] or 1)))
         for r in diachronica_rules:
             if r["section"] in leave_out_sections:
+                continue
+            if keep_sections is not None and r["section"] not in keep_sections:
                 continue
             self.rules.append((r["rule"], 1.0))
         self.parsed = []
