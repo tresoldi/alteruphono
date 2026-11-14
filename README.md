@@ -56,15 +56,15 @@ library and keeps the 1.x Python API. The design is
 
 ## Installation
 
-2.0 is built from source, next to a merkmal checkout on branch
-`claude/alteruphono-support` (which adds the two merkmal calls 2.0 needs):
+2.0 is built from source, next to a merkmal checkout (merkmal `master` at
+`1a8a90c` or later, which has the two merkmal calls 2.0 needs):
 
 ```bash
-git clone -b claude/alteruphono-support https://github.com/tresoldi/merkmal.git
+git clone https://github.com/tresoldi/merkmal.git
 ```
 
 ```bash
-git clone -b claude/optimistic-ptolemy-otlkig https://github.com/tresoldi/alteruphono.git
+git clone https://github.com/tresoldi/alteruphono.git
 ```
 
 ```bash

@@ -46,4 +46,4 @@ python tests/parity/run_parity.py --cli build/parity/alteruphono-cli --oracle /t
 
 Two results agree when both are OK with identical output (graphemes, sorted features, and the partial flag of every element), or when both are errors of any kind.
 
-merkmal must be the branch `claude/alteruphono-support` (it adds `mk_system_inventory` and `mk_unicode_normalize`), checked out next to this repository.
+merkmal must be `master` at `1a8a90c` or later (it has `mk_system_inventory` and `mk_unicode_normalize`), checked out next to this repository. The parity record was made at `af81477`, the commit merged there.

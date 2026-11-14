@@ -27,8 +27,8 @@ if(AP_ENABLE_SANITIZER AND MSVC)
 endif()
 
 # merkmal: an installed package first, else the sibling source tree.
-# alteruphono needs mk_system_inventory and mk_unicode_normalize, which are on
-# merkmal's branch claude/alteruphono-support until merged.
+# alteruphono needs mk_system_inventory and mk_unicode_normalize (merkmal master,
+# 1a8a90c or later).
 find_package(merkmal CONFIG QUIET)
 if(NOT merkmal_FOUND)
     if(NOT EXISTS "${AP_MERKMAL_SOURCE_DIR}/CMakeLists.txt")

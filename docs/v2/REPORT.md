@@ -40,5 +40,5 @@ The goal had two parts:
 ## Not done
 
 - **Real tracks** (v16 with `v16_real.pack` on Romance, Germanic and Tukanoan): not run, because their data are not in this environment.
-- **Release.** Nothing is merged or tagged, by instruction. The tags `v1.0.0rc1` and `v1.0.0rc1-simultaneous` exist locally only (the push was refused).
-- **merkmal.** Its `claude/alteruphono-support` branch (inventory and normalisation API) is unmerged; 2.0 builds against it.
+- **Release.** 2.0 is merged into alteruphono `master` after merkmal's branch (2026-11-14), but not tagged. The tags `v1.0.0rc1` and `v1.0.0rc1-simultaneous` exist locally only (the push was refused).
+- **merkmal.** Its inventory and normalisation API is merged into merkmal `master` (`1a8a90c`); 2.0 builds against it.

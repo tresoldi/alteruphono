@@ -2,8 +2,8 @@
 
 The C core and merkmal's C sources are compiled straight into the extension,
 as merkmal and regulae do, so nothing is located at run time. merkmal is taken
-from AP_MERKMAL_SOURCE_DIR (default: ../merkmal, branch
-claude/alteruphono-support until merged), with its `cc-by` data profile:
+from AP_MERKMAL_SOURCE_DIR (default: ../merkmal, master at
+1a8a90c or later), with its `cc-by` data profile:
 alteruphono needs only merkmal's `descriptive` system (CC-BY-4.0), and the
 full profile would put P-base (CC-BY-NC-SA) and PHOIBLE (CC-BY-SA) in an MIT
 package.

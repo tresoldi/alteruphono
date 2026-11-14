@@ -56,8 +56,8 @@ All notable changes to AlteruPhono will be documented in this file.
   `backward` and 1.x's syllabifier, on merkmal (`alteruphono-1` projection,
   DESIGN 4.1). Segments are interned per context; class tests are bitset
   operations. No global mutable state.
-- Requires merkmal branch `claude/alteruphono-support` (`mk_system_inventory`,
-  `mk_unicode_normalize`).
+- Requires merkmal master at 1a8a90c or later (`mk_system_inventory`,
+  `mk_unicode_normalize`; merged from merkmal's `claude/alteruphono-support`).
 - Parity (docs/v2/PARITY.md): 0 disagreements with the Python reference on
   251,607 cases, including blindrec's 50,000-application gate stream and all
   801 catalogue test pairs. Feature changes from merkmal are confined to 11
