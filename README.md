@@ -16,8 +16,11 @@ library and keeps the 1.x Python API. The design is
 - **Rule application is deterministic and says nothing about probability.**
   `forward` applies a rule everywhere its pattern matches, all at once (SPE
   style: contexts are read from the input and never consumed). It does not
-  model how likely a change is. A learned, directional model of change is
-  planned as a separate object (DESIGN §6); nothing in the engine uses it.
+  model how likely a change is. A learned, directional model of change
+  exists separately (`alteruphono.model`, C scorer `ap_model_*`). Its shape is
+  calibrated and its rate is not, and in a pre-registered test it did not
+  improve blindrec's reconstruction. See docs/v2/REPORT.md. The engine never
+  uses it.
 - **`backward` proposes; it does not reconstruct.** It returns every form the
   rule could have come from, under the rule alone, including the unchanged
   form. It knows nothing of other rules, of the tree or of the lexicon. With
@@ -46,6 +49,7 @@ library and keeps the 1.x Python API. The design is
 - **[API Reference](docs/api_reference.md)** — Signatures and brief descriptions
   for all public modules (1.x)
 - **[2.0 design](docs/v2/DESIGN.md)**, **[parity record](docs/v2/PARITY.md)**,
+  the **[closing report](docs/v2/REPORT.md)**,
   and design notes for [merkmal](docs/v2/notes/merkmal.md),
   [regulae](docs/v2/notes/regulae.md), [yvyra](docs/v2/notes/yvyra.md),
   [blindrec](docs/v2/notes/blindrec.md) and [historia](docs/v2/notes/historia.md)
