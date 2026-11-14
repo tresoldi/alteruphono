@@ -2,3 +2,8 @@ include README.md
 include AUTHORS.md
 include LICENSE
 include resources/*.tsv
+include resources/*.txt
+include setup.py
+recursive-include include *.h
+recursive-include src *.c *.h
+recursive-include python *.c

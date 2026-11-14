@@ -1,13 +1,17 @@
-"""Pluggable feature system registry for alteruphono v2."""
+"""Feature systems.
+
+2.0 has one built-in system, `ipa`: 1.x's label names on merkmal's values. 1.x's
+own `tresoldi` and `distinctive` tables are gone (docs/v2/DESIGN.md 3.4). A
+system registered here serves Python-level code (match_pattern, prosody,
+comparative); forward and backward always run on the engine's `ipa`.
+"""
 
 from __future__ import annotations
 
 import unicodedata
 from typing import TYPE_CHECKING
 
-from alteruphono.features.distinctive import DistinctiveFeatureSystem
 from alteruphono.features.ipa import IPAFeatureSystem
-from alteruphono.features.tresoldi import TresoldiFeatureSystem
 from alteruphono.types import Sound
 
 # IPA equivalence map: common alternate codepoints -> canonical form (for lookup)
@@ -31,8 +35,6 @@ def _ensure_builtins() -> None:
     """Register built-in systems on first access."""
     if not _registry:
         _registry["ipa"] = IPAFeatureSystem()
-        _registry["tresoldi"] = TresoldiFeatureSystem()
-        _registry["distinctive"] = DistinctiveFeatureSystem()
 
 
 def register(name: str, system: FeatureSystem) -> None:
@@ -95,23 +97,20 @@ def sound(grapheme: str, system_name: str | None = None) -> Sound:
     created with partial=True and the class features.
     """
     sys = get_system(system_name)
+    if sys.name == "ipa":
+        from alteruphono import _core
 
-    # Check if it's a sound class
+        return _core.make_sound(grapheme)
+
     class_feats = sys.class_features(grapheme)
     if class_feats is not None:
         return Sound(grapheme=grapheme, features=class_feats, partial=True)
-
-    # Regular grapheme lookup
     feats = sys.grapheme_to_features(grapheme)
     if feats is not None:
         return Sound(grapheme=grapheme, features=feats)
-
-    # Try normalized form
     norm = _normalize_grapheme(grapheme)
     if norm != grapheme:
         feats = sys.grapheme_to_features(norm)
         if feats is not None:
             return Sound(grapheme=grapheme, features=feats)
-
-    # Unknown grapheme — return with empty features
     return Sound(grapheme=grapheme)

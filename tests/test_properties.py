@@ -85,17 +85,8 @@ class TestNWAlignmentProperties:
         assert len(a_aligned) == len(b_aligned)
 
 
-class TestScalarRoundtrip:
-    def test_roundtrip_preserves_key_dimensions(self) -> None:
-        """Scalar round-trip preserves the key features for basic sounds."""
-        from alteruphono.features.distinctive import DistinctiveFeatureSystem
-
-        sys = DistinctiveFeatureSystem()
-        for grapheme in ["p", "b", "t", "d", "s", "a", "i", "u"]:
-            scalars = sys.grapheme_to_scalars(grapheme)
-            assert scalars is not None, f"No scalars for {grapheme}"
-            back = sys.scalars_to_features(scalars)
-            assert len(back) > 0, f"Empty roundtrip for {grapheme}"
+# TestScalarRoundtrip tested 1.x's `distinctive` feature system, removed in 2.0
+# (docs/v2/DESIGN.md 3.4).
 
 
 _GEO_FEATURES = [

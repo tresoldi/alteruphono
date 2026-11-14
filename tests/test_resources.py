@@ -3,44 +3,22 @@
 from alteruphono import resources
 
 
-class TestLoadSounds:
-    def test_returns_dict(self) -> None:
-        sounds = resources.load_sounds()
-        assert isinstance(sounds, dict)
-
-    def test_has_common_graphemes(self) -> None:
-        sounds = resources.load_sounds()
-        assert "a" in sounds
-        assert "p" in sounds
-        assert "i" in sounds
-
-    def test_names_are_strings(self) -> None:
-        sounds = resources.load_sounds()
-        for g, name in list(sounds.items())[:10]:
-            assert isinstance(g, str)
-            assert isinstance(name, str)
-            assert len(name) > 0
+class TestLoadGraphemes:
+    """2.0: 1.x's sounds.tsv and features.tsv (its feature tables) are gone;
+    the grapheme universe remains (docs/v2/DESIGN.md 4.3)."""
 
     def test_large_inventory(self) -> None:
-        sounds = resources.load_sounds()
-        # Should have thousands of sounds
-        assert len(sounds) > 5000
+        graphemes = resources.load_graphemes()
+        assert isinstance(graphemes, tuple)
+        assert len(graphemes) > 5000
 
+    def test_has_common_graphemes(self) -> None:
+        graphemes = set(resources.load_graphemes())
+        assert {"a", "p", "i"} <= graphemes
 
-class TestLoadFeatures:
-    def test_returns_list(self) -> None:
-        features = resources.load_features()
-        assert isinstance(features, list)
-
-    def test_has_entries(self) -> None:
-        features = resources.load_features()
-        assert len(features) > 100
-
-    def test_tuple_structure(self) -> None:
-        features = resources.load_features()
-        for value, feature in features[:10]:
-            assert isinstance(value, str)
-            assert isinstance(feature, str)
+    def test_no_feature_tables(self) -> None:
+        assert not hasattr(resources, "load_sounds")
+        assert not hasattr(resources, "load_features")
 
 
 class TestLoadClasses:

@@ -1,0 +1,4 @@
+alteruphono-change-model	1
+system	descriptive
+param	a_sub	-1
+rule	1	p > b / V _ V

@@ -1,37 +1,90 @@
 # AlteruPhono
 
-[![PyPI](https://img.shields.io/pypi/v/alteruphono.svg)](https://pypi.org/project/alteruphono)
+AlteruPhono applies sound-change rules written in standard notation
+(`p > b / V _ V`) forwards, to simulate change, and backwards, to propose
+proto-forms.
 
-AlteruPhono is a Python library for modeling phonological sound changes in
-historical linguistics. It lets you define rules in standard notation
-(`p > b / V _ V`), apply them forward to simulate language evolution, and apply
-them backward to reconstruct proto-forms.
+**2.0 (in development, branch `claude/optimistic-ptolemy-otlkig`)** rewrites the
+engine in C99 on the [merkmal](https://github.com/tresoldi/merkmal) feature
+library and keeps the 1.x Python API. The design is
+[docs/v2/DESIGN.md](docs/v2/DESIGN.md); what has been checked, and how, is in
+[docs/v2/PARITY.md](docs/v2/PARITY.md). The last Python-only release is tagged
+`v1.0.0rc1-simultaneous`; use it to reproduce results made with 1.x.
 
-Zero dependencies, strict typing, frozen dataclasses, and ~3,000 lines of
-source covering the full pipeline from parsing to comparative reconstruction.
+## What the results mean
+
+- **Rule application is deterministic and says nothing about probability.**
+  `forward` applies a rule everywhere its pattern matches, all at once (SPE
+  style: contexts are read from the input and never consumed). It does not
+  model how likely a change is. A learned, directional model of change
+  exists separately (`alteruphono.model`, C scorer `ap_model_*`). Its shape is
+  calibrated and its rate is not, and in a pre-registered test it did not
+  improve blindrec's reconstruction. See docs/v2/REPORT.md. The engine never
+  uses it.
+- **`backward` proposes; it does not reconstruct.** It returns every form the
+  rule could have come from, under the rule alone, including the unchanged
+  form. It knows nothing of other rules, of the tree or of the lexicon. With
+  more than 100,000 candidates it raises `OverflowError` instead of building
+  them. Its inversion of feature modifiers is weak (1.x's, reproduced): it
+  undoes `@1[+voiced]` by removing `voiced` without adding `voiceless`.
+- **Features are merkmal's**, restricted to 1.x's label names (the
+  `alteruphono-1` projection). For 7,342 of the 7,353 graphemes of 1.x's
+  inventory that merkmal resolves, the labels equal 1.x's; the other 11 are
+  listed in PARITY.md (one of them, `ʈʂː`, was a 1.x error).
+- **`sound_distance` is 1.x's feature-geometry distance**, kept so that
+  results that depended on it can be reproduced. It is not a metric, not a
+  probability of change, and not evidence of direction. The same holds for
+  merkmal's dissimilarities.
+- **The speed figures are for this machine and this stream** (catalogue rules
+  on catalogue words, mean 8.9 segments): forward is about 130–190× faster
+  than 1.x in C and about 25× through the Python API; Python-level rule
+  parsing is no faster than 1.x unless the parse is cached. PARITY.md has the
+  numbers, including the targets that were missed.
 
 ## Documentation
 
 - **[Comprehensive Guide](docs/guide.md)** — Theory, tutorials, and a worked
-  Proto-Romance case study for grad students and researchers
+  Proto-Romance case study for grad students and researchers (written for 1.x;
+  the notation and Python API are unchanged)
 - **[API Reference](docs/api_reference.md)** — Signatures and brief descriptions
-  for all public modules
+  for all public modules (1.x)
+- **[2.0 design](docs/v2/DESIGN.md)**, **[parity record](docs/v2/PARITY.md)**,
+  the **[closing report](docs/v2/REPORT.md)**,
+  and design notes for [merkmal](docs/v2/notes/merkmal.md),
+  [regulae](docs/v2/notes/regulae.md), [yvyra](docs/v2/notes/yvyra.md),
+  [blindrec](docs/v2/notes/blindrec.md) and [historia](docs/v2/notes/historia.md)
 
 ## Installation
 
-```bash
-pip install alteruphono
-```
+2.0 is built from source, next to a merkmal checkout (merkmal `master` at
+`1a8a90c` or later, which has the two merkmal calls 2.0 needs):
 
-Development install:
+```bash
+git clone https://github.com/tresoldi/merkmal.git
+```
 
 ```bash
 git clone https://github.com/tresoldi/alteruphono.git
-cd alteruphono
-pip install -e ".[dev]"
 ```
 
-Requires Python 3.12+. No runtime dependencies.
+```bash
+cd alteruphono && pip install -e ".[dev]"
+```
+
+`AP_MERKMAL_SOURCE_DIR` points the build at another merkmal tree. The
+extension embeds merkmal's CC-BY-4.0 data only (its `cc-by` profile); P-base
+and PHOIBLE are left out. Requires Python 3.12+ and a C99 compiler; no runtime
+dependencies.
+
+The C library and its checks:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build && (cd build && ctest)
+```
+
+```bash
+scripts/check.sh --full
+```
 
 ## Quick Start
 
@@ -171,52 +224,27 @@ protos = alteruphono.backward(seq, rule)
 
 ## Feature Systems
 
-AlteruPhono ships with three pluggable feature systems backed by a TSV
-inventory of 7,356 sounds and a feature geometry tree based on
-Clements & Hume (1995).
+2.0 has one built-in system, `ipa`: 1.x's label names and categories (`voiced`,
+`bilabial`, `stop`, …; `features/vocabulary.py`), with values from merkmal's
+`descriptive` system. 1.x's own `tresoldi` and `distinctive` tables are gone:
+every feature value now comes from merkmal.
 
 ```python
-from alteruphono.features import sound, get_system, list_systems, set_default
+from alteruphono.features import sound, get_system, list_systems
 
-# List available systems
-list_systems()   # → ['ipa', 'tresoldi', 'distinctive']
+list_systems()   # → ['ipa']
 
-# Create a sound with feature lookup
 s = sound("a")
 print(s.features)  # → frozenset({'vowel', 'open', 'front', 'unrounded'})
 
-# Sound classes return partial sounds
-v = sound("V")
-print(v.partial)   # → True
-print(v.features)  # → frozenset({'vowel'})
-
-# Switch default system
-set_default("tresoldi")
+v = sound("V")     # sound classes give partial sounds
+print(v.partial, v.features)  # → True frozenset({'vowel'})
 ```
 
-### IPA Categorical (`ipa`)
-
-Standard IPA features extracted from the NAME column of `sounds.tsv`. Features
-are categorical strings like `consonant`, `voiced`, `bilabial`, `stop`.
-Supports negative features in class matching (e.g., `-stop` excludes stops).
-Sound distance uses the feature geometry tree for weighted comparison.
-
-### Tresoldi (`tresoldi`)
-
-Broader feature set preserving the full IPA description (all modifiers, secondary
-articulations, tonal features). Same 7,356-sound inventory, richer feature
-representation. Geometry-based sound distance.
-
-### Distinctive (`distinctive`)
-
-Maps categorical features to 32 scalar dimensions (-1.0 to +1.0) organized
-by feature geometry nodes: Laryngeal (voice, spread glottis, constricted
-glottis, breathy voice, creaky voice), Manner (sonorant, continuant, nasal,
-lateral, strident, delayed release, tap, syllabic), Labial (labial, round),
-Coronal (coronal, anterior, distributed, apical), Dorsal (dorsal, high, low,
-back), TongueRoot (ATR), and Prosodic (long, nasalized, labialized,
-palatalized, pharyngealized, ejective, stress, tone). Dimensions are weighted
-by inverse tree depth for geometry-aware sound distance.
+Lookups are exact over 1.x's grapheme inventory (`resources/graphemes_1x.txt`),
+as in 1.x: a grapheme outside it has no features. Sound classes are the pack in
+`resources/classes.tsv` (a class is a conjunction of features; `-stop` excludes
+stops).
 
 ### Feature Geometry
 
@@ -237,31 +265,15 @@ Root
 └── Prosodic (long, nasalized, stress, ...)
 ```
 
-The tree provides feature distance calculations, sibling-based mutual
-exclusivity, and weighted sound distance used across all feature systems.
+The tree provides 1.x's feature distance and weighted sound distance, kept in
+2.0 for reproducibility (DESIGN D3). It is not a metric.
 
 ### Custom feature systems
 
-Any object satisfying the `FeatureSystem` protocol can be registered:
-
-```python
-from alteruphono.features import register
-from alteruphono.features.protocol import FeatureSystem
-
-class MySystem:
-    @property
-    def name(self) -> str: return "custom"
-    def grapheme_to_features(self, grapheme: str) -> frozenset[str] | None: ...
-    def features_to_grapheme(self, features: frozenset[str]) -> str | None: ...
-    def is_class(self, grapheme: str) -> bool: ...
-    def class_features(self, grapheme: str) -> frozenset[str] | None: ...
-    def add_features(self, base: frozenset[str], added: frozenset[str]) -> frozenset[str]: ...
-    def partial_match(self, pattern: frozenset[str], target: frozenset[str]) -> bool: ...
-    def feature_distance(self, feat_a: str, feat_b: str) -> float: ...
-    def sound_distance(self, feats_a: frozenset[str], feats_b: frozenset[str]) -> float: ...
-
-register("custom", MySystem())
-```
+An object satisfying the `FeatureSystem` protocol can still be registered with
+`alteruphono.features.register`; it serves the Python-level code
+(`match_pattern`, prosody, comparative analysis). `forward` and `backward` run
+in the C engine on `ipa` only.
 
 ## Sound Change Engine
 
@@ -389,76 +401,39 @@ alteruphono [--json] [--version] <command> [args]
 
 All commands support `--json` for machine-readable output.
 
-## TSV Resources
+## Resources
 
-The library ships with TSV data files in `resources/`:
-
-| File | Records | Columns |
-|------|---------|---------|
-| `sounds.tsv` | 7,356 | GRAPHEME, NAME |
-| `features.tsv` | 126 | VALUE, FEATURE |
-| `classes.tsv` | 20 | SOUND_CLASS, DESCRIPTION, FEATURES, GRAPHEMES |
-| `sound_changes.tsv` | 801 | ID, RULE, WEIGHT, TEST_ANTE, TEST_POST |
-
-Access programmatically:
+| File | Records | Contents |
+|------|---------|----------|
+| `sound_changes.tsv` | 801 | ID, RULE, WEIGHT, TEST_ANTE, TEST_POST (test pairs apply inside `# … #`) |
+| `classes.tsv` | 20 | SOUND_CLASS, DESCRIPTION, FEATURES |
+| `graphemes_1x.txt` | 7,356 | 1.x's grapheme inventory, one per line, in 1.x order |
 
 ```python
-from alteruphono.resources import load_sounds, load_features, load_classes, load_sound_changes
-
-sounds = load_sounds()          # {grapheme: name}
-features = load_features()      # [(value, feature), ...]
-classes = load_classes()         # {class: (desc, feats, [graphemes])}
-rules = load_sound_changes()    # [{"ID": ..., "RULE": ..., ...}, ...]
+from alteruphono.resources import load_sound_changes, load_classes, load_graphemes
 ```
+
+1.x's `sounds.tsv` (grapheme → feature description) and `features.tsv` were
+its feature tables and are gone, with `load_sounds` and `load_features`.
 
 ## Architecture
 
 ```
-alteruphono/                 # 26 files, ~3,000 LOC
-├── types.py                 # Sound, Boundary, Token union, Rule, MatchResult
-├── resources.py             # TSV loader with @cache
-├── parser.py                # parse_rule(), parse_sequence()
-├── match.py                 # match_pattern() with quantifier support
-├── modifiers.py             # apply_modifiers(), invert_modifiers()
-├── forward.py               # forward() with variable-length windows
-├── backward.py              # backward()
-├── features/                # FeatureSystem Protocol + 3 implementations
-│   ├── protocol.py          # FeatureSystem protocol definition
-│   ├── common.py            # Shared: add_features(), partial_match(), distance
-│   ├── geometry.py          # Clements & Hume feature geometry tree
-│   ├── ipa.py               # IPA categorical features
-│   ├── tresoldi.py          # Tresoldi extended features
-│   ├── distinctive.py       # 32 ScalarDimension scalar features
-│   └── __init__.py          # Registry: get_system(), sound(), etc.
-├── engine/                  # Ordered rule application
-│   ├── engine.py            # SoundChangeEngine
-│   ├── rules.py             # CategoricalRule, GradientRule, RuleSet
-│   ├── ordering.py          # analyze_interactions(), recommend_ordering()
-│   └── gradient.py          # Gradient utilities
-├── comparative/             # Comparative method
-│   ├── analysis.py          # ComparativeAnalysis, Needleman-Wunsch alignment
-│   └── reconstruction.py    # reconstruct_proto() (majority/conservative/parsimony/sankoff)
-├── prosody.py               # Syllable, ProsodicWord, syllabify()
-├── cli.py                   # argparse CLI
-└── __main__.py              # python -m alteruphono
-
-tests/                       # 17 files, ~1,450 LOC, 227 tests
-resources/                   # TSV data files
+include/alteruphono.h        # the C API (ap_*): contexts, segments, rules, forward, backward
+src/                         # the C99 engine: parser, matcher, forward, backward, syllabifier
+src/generated/compat1x.c     # 1.x vocabulary, class pack, grapheme inventory (scripts/gen_compat1x.py)
+python/_native.c             # CPython extension alteruphono._native (abi3, Python >= 3.12)
+alteruphono/                 # the 1.x Python API, on the engine (_core.py is the bridge)
+tests/c/, fuzz/              # C tests and libFuzzer targets (scripts/check.sh)
+tests/parity/                # differential harness against 1.x
+bench/                       # speed benchmarks (C and Python API)
+docs/v2/                     # design, parity record, design notes for the other libraries
 ```
 
-### Design decisions
-
-- **All types are frozen dataclasses** — immutable, hashable, no methods for
-  feature arithmetic (those live in FeatureSystem).
-- **Token is a union type** — dispatch via `isinstance()`, not an ABC hierarchy.
-- **Sequences are tuples** — immutable, hashable, no wrapper class.
-- **Feature geometry tree** — Clements & Hume (1995) hierarchy for principled
-  feature distance and mutual exclusivity.
-- **Sound classes loaded from TSV** — all class definitions come from
-  `classes.tsv`, supporting negative features (e.g., `-stop`).
-- **All public functions are pure** — no global mutable state except the
-  feature system registry.
-- **Zero runtime dependencies** — only stdlib.
+C conventions follow regulae: one public header, `ap_status` returns,
+caller-owned diagnoses, no global mutable state, one thread per context
+(`ap_context_clone` for another thread), `-Werror` and sanitizer builds in
+`scripts/check.sh`.
 
 ## Citation
 

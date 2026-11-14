@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "alteruphono"
-version = "1.0.0rc1"
+version = "2.0.0.dev0"
 description = "Phonological sound change modeling for historical linguistics"
 authors = [
     {name = "Tiago Tresoldi", email = "tiago.tresoldi@lingfil.uu.se"}
@@ -54,7 +54,7 @@ include-package-data = true
 include = ["alteruphono*"]
 
 [tool.setuptools.package-data]
-alteruphono = ["../resources/*.tsv"]
+alteruphono = ["../resources/*.tsv", "../resources/*.txt"]
 
 [tool.ruff]
 target-version = "py312"
