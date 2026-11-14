@@ -25,6 +25,14 @@ All notable changes to AlteruPhono will be documented in this file.
   post hoc families; its rate passes on Turkic after per-branch adaptation
   but fails on both post hoc families. Use: relative rates only (blindrec
   variant R), not the model's P(change).
+- The stage-5 test (blindrec PREREG, method v16: v8's rates shared by the
+  model's relative rates; frozen at blindrec c4348cc9; C scorer ap_model_*)
+  **fails on held-out families, scored once**: v16 - v8 mean NED +0.0041
+  [-0.0020, +0.0108] on 25 full lists and +0.0037 [-0.0020, +0.0093] on 99
+  short lists; a distance-only pack does no better. The development gain
+  (-0.0019 full) did not carry over. The model's shape advantage over
+  distance (M4b) stands, but it does not become a reconstruction gain in
+  stage 5. Real tracks were not run (no data in this environment).
 
 ### 2.0, M2: Python bindings, and blindrec on 2.0
 - `alteruphono._native` (abi3, Python >= 3.12) compiles the C core and
