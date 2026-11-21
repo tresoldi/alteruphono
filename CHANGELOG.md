@@ -4,6 +4,17 @@ All notable changes to AlteruPhono will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed: grapheme_features now normalises alternate codepoints, as sound() does
+- `ap_grapheme_features` (and so `IPAFeatureSystem.grapheme_to_features`) looked graphemes up
+  literally in the 1.x universe, so IPA ɡ (U+0261), and with it ɡʱ and ɡʲ, returned no features
+  although `sound()` resolved them (`api_make_sound` already retried through
+  `api_normalize_lookup`). A miss is now retried the same way. Graphemes that resolve as written
+  are unchanged.
+- The lookup normalisation also maps ɫ (U+026B, dark l) to lˠ, merkmal's own source convention
+  for it. Wiktionary's IPA writes ɫ for Classical Latin and Old Irish.
+- Found by blind-reconstruction (feature-less ɡ silently degraded alignment scores on
+  Indo-European word lists); test in tests/test_features.py.
+
 ### 2.0: the change-model scorer in C
 - `ap_model_load`, `ap_model_eta`, `ap_model_logprob` (src/model.c), a
   text pack format (alteruphono/model/pack.py exports it), Python access via
