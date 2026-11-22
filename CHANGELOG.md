@@ -12,6 +12,13 @@ All notable changes to AlteruPhono will be documented in this file.
   are unchanged.
 - The lookup normalisation also maps ɫ (U+026B, dark l) to lˠ, merkmal's own source convention
   for it. Wiktionary's IPA writes ɫ for Classical Latin and Old Irish.
+- **Behaviour change to note:** the retry is the full lookup normalisation (NFD, then the
+  character equivalences), so precomposed letters that the literal lookup missed now resolve
+  too. Measured on nine Lexibank and NorthEuraLex word lists, 20 of 561 segment types gain
+  features: nasal vowels (ã, ẽ, õ, ũ, ĩ, ỹ and their long forms), breve vowels (ă, ĕ, ĭ, ŏ, ŭ),
+  ç and cç, ṳ, and IPA ɡ. Code that relied on these returning None (for example a fallback that
+  strips the diacritic) will see different results. blind-reconstruction pins the earlier
+  behaviour for its frozen methods for that reason.
 - Found by blind-reconstruction (feature-less ɡ silently degraded alignment scores on
   Indo-European word lists); test in tests/test_features.py.
 
