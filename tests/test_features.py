@@ -116,3 +116,16 @@ class TestIPAFeatureSystem:
 
 # TestTresoldiFeatureSystem and TestDistinctiveFeatureSystem tested 1.x's own
 # feature tables, removed in 2.0 (docs/v2/DESIGN.md 3.4).
+
+
+def test_lookup_normalises_alternate_codepoints():
+    """IPA g (U+0261) and dark l (U+026B) resolve as g and l + velarized, in grapheme_to_features
+    as in sound(); graphemes that resolve as written are unchanged."""
+    from alteruphono.features import get_system
+
+    f = get_system()
+    assert f.grapheme_to_features("ɡ") == f.grapheme_to_features("g")
+    assert f.grapheme_to_features("ɡʱ") == f.grapheme_to_features("gʱ")
+    assert f.grapheme_to_features("ɡʲ") == f.grapheme_to_features("gʲ")
+    assert f.grapheme_to_features("ɫ") == f.grapheme_to_features("lˠ")
+    assert f.grapheme_to_features("g") == frozenset({"velar", "stop", "voiced", "consonant"})

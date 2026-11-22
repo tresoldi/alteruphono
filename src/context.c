@@ -416,6 +416,14 @@ static ap_status map_chars(const char *in, int to_output, char **out)
                 i += 2;
                 continue;
             }
+            /* ɫ (U+026B, dark l) -> lˠ (l + U+02E0): merkmal's own source convention; the 1.x
+             * universe has lˠ but not ɫ, so the written form found nothing */
+            if (len - i >= 2 && p[0] == 0xC9 && p[1] == 0xAB) {
+                memcpy(buf + w, "l\xcb\xa0", 3);
+                w += 3;
+                i += 2;
+                continue;
+            }
             if (len - i >= 3 && p[0] == 0xE2 && p[1] == 0x80 && p[2] == 0x99) {
                 memcpy(buf + w, "\xca\xbc", 2);
                 w += 2;
@@ -1130,8 +1138,25 @@ ap_status ap_grapheme_features(ap_context *ctx, const char *grapheme, char ***la
     *labels = NULL;
     *count = 0;
     st = api_lookup(ctx, grapheme, &l, found);
-    if (st != AP_OK || !*found) {
+    if (st != AP_OK) {
         return st;
+    }
+    if (!*found) {
+        /* as api_make_sound: a written form outside the 1.x universe is retried in its lookup
+         * normalisation (NFD; IPA g -> g; dark l -> l + velarized; apostrophes), so that
+         * grapheme_features agrees with sound(). Graphemes that resolve as written are untouched. */
+        char *norm = NULL;
+        st = api_normalize_lookup(grapheme, &norm);
+        if (st != AP_OK) {
+            return st;
+        }
+        if (strcmp(norm, grapheme) != 0) {
+            st = api_lookup(ctx, norm, &l, found);
+        }
+        free(norm);
+        if (st != AP_OK || !*found) {
+            return st;
+        }
     }
     return labels_to_strings(ctx, &l, labels, count);
 }
